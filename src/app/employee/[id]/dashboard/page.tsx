@@ -14,7 +14,7 @@ import Link from "next/link";
 import data from "@/app/data.json";
 
 const DashboardPage = () => {
-  const colors = ["#8742f5", "#f542e0", "#f5a742", "#4287f5", "#42f5c8"];
+  const colors = ["#8742f5", "#f542e0", "#f5a742", "#4287f5", "#42f5c8", "#f5e142"];
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] lg:p-6 p-4">
