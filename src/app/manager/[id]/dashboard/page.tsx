@@ -255,7 +255,7 @@ export default function ManagerDashboard() {
                       setModalOpen(true);
                     }}
                   >
-                    View Details
+                    {selectedTab === "PENDING" ? "Review" : "View Details"}
                   </button>
 
                   {/* {req.status === "PENDING" && (

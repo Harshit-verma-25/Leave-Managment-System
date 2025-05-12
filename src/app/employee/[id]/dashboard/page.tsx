@@ -30,7 +30,7 @@ const DashboardPage = () => {
           const percentage = (used / total) * 100;
 
           return (
-            <Card key={type}>
+            <Card key={type} className="pt-6">
               <CardContent className="flex flex-col items-center justify-center p-6">
                 <div
                   className="mb-4 h-24 w-24 rounded-full flex items-center justify-center"

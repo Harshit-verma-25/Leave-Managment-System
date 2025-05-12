@@ -35,7 +35,11 @@ const LoginForm = ({ type, setType }: LoginFormProps) => {
       await new Promise((res) => setTimeout(res, 1000));
 
       // Navigate without full reload
-      router.push(`/${type.toLowerCase()}/1/dashboard`);
+      if (type !== "admin") {
+        router.push(`/${type.toLowerCase()}/1/dashboard`);
+      } else {
+        router.push(`/admin/dashboard`);
+      }
     } catch (error) {
       console.error("Login error:", error);
       setError("Login failed. Please try again.");

@@ -2,7 +2,12 @@
 
 import Header from "@/app/components/header";
 import Sidebar from "@/app/components/sidebar";
-import { LayoutDashboard, ScrollText, UserRoundX } from "lucide-react";
+import {
+  // CalendarClock,
+  LayoutDashboard,
+  Network,
+  User2Icon,
+} from "lucide-react";
 // import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -13,23 +18,27 @@ export default function AdminDashboardLayout({
 }) {
   //   const router = useRouter();
 
-  const adminId = "1";
   const navItems = [
     {
-      href: `/admin/${adminId}/dashboard`,
+      href: `/admin/dashboard`,
       icon: LayoutDashboard,
       label: "Dashboard",
     },
     {
-      href: `/admin/${adminId}/employee-records`,
-      icon: UserRoundX,
-      label: "Employee Records",
+      href: `/admin/departments`,
+      icon: Network,
+      label: "Departments",
     },
     {
-        href: `/admin/${adminId}/leave-policy`,
-        icon: ScrollText,
-        label: "Leave Policy",
-    }
+      href: `/admin/staff`,
+      icon: User2Icon,
+      label: "Staff",
+    },
+    // {
+    //   href: `/admin/leave-type`,
+    //   icon: CalendarClock,
+    //   label: "Leave Type",
+    // },
   ];
 
   const [isSidebarOpen, setSidebarOpen] = useState(true);

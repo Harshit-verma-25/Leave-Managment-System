@@ -27,12 +27,12 @@ const Sidebar = ({ isOpen, toggleSidebar, navItems }: SidebarProps) => {
 
   return (
     <div
-      className={`bg-gray-900 text-white min-h-screen relative z-40 transform ${
+      className={`bg-black text-white min-h-screen relative z-40 transform ${
         isOpen ? "min-w-60" : "w-20"
       } transition-all duration-300 flex flex-col`}
     >
       {/* Toggle Button */}
-      <div className="flex items-center justify-between p-4 bg-gray-800">
+      <div className="flex items-center justify-between p-4 bg-black">
         {isOpen && <h2 className="text-lg font-semibold">Menu</h2>}
         <button
           onClick={toggleSidebar}
@@ -65,7 +65,7 @@ const Sidebar = ({ isOpen, toggleSidebar, navItems }: SidebarProps) => {
               onClick={handleLogout}
               className={`${navItemClass} cursor-pointer ${
                 isOpen ? "justify-start" : "justify-center"
-              } bg-red-600 hover:bg-red-700 w-full`}
+              } bg-red-600 hover:bg-red-400 w-full`}
             >
               <LogOut className="h-6 w-6" />
               {isOpen && <span className="ml-4 text-base">Logout</span>}
