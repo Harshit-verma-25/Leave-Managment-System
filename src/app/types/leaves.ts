@@ -1,9 +1,8 @@
-export type LeaveType = "CL" | "SL" | "EL" | "ML" | "PL" | "AL";
+export type LeaveType = "CL" | "SL" | "ML" | "PL" | "AL";
 
 export const LEAVE_TYPES = {
   CL: "Casual Leave",
   SL: "Sick Leave",
-  EL: "Earned Leave",
   ML: "Maternity Leave",
   PL: "Personal Leave",
   AL: "Annual Leave",

@@ -181,7 +181,7 @@ export default function Home() {
                 className="w-full h-12 cursor-pointer rounded-md px-8 border-slate-300 bg-slate-100 text-base text-slate-800 hover:bg-slate-200 hover:scale-105"
                 onClick={() => setType("admin")}
               >
-                Login as HR/Admin
+                Login as Admin
               </button>
             </div>
 

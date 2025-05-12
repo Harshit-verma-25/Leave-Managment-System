@@ -2,29 +2,34 @@
 
 import Header from "@/app/components/header";
 import Sidebar from "@/app/components/sidebar";
-import { LayoutDashboard, UserRoundX } from "lucide-react";
+import { LayoutDashboard, ScrollText, UserRoundX } from "lucide-react";
 // import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default function EmployeeDashboardLayout({
+export default function AdminDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   //   const router = useRouter();
 
-  const employeeId = "1";
+  const adminId = "1";
   const navItems = [
     {
-      href: `/employee/${employeeId}/dashboard`,
+      href: `/admin/${adminId}/dashboard`,
       icon: LayoutDashboard,
       label: "Dashboard",
     },
     {
-      href: `/employee/${employeeId}/leaves`,
+      href: `/admin/${adminId}/employee-records`,
       icon: UserRoundX,
-      label: "Leave Records",
+      label: "Employee Records",
     },
+    {
+        href: `/admin/${adminId}/leave-policy`,
+        icon: ScrollText,
+        label: "Leave Policy",
+    }
   ];
 
   const [isSidebarOpen, setSidebarOpen] = useState(true);

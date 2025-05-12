@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Pagination from "@/app/components/pagination";
 
 const leaves = Array.from({ length: 45 }, (_, i) => ({
   id: i + 1,
@@ -15,8 +16,6 @@ const leaves = Array.from({ length: 45 }, (_, i) => ({
 export default function EmployeeLeavePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(10);
-
-  const totalPages = Math.ceil(leaves.length / limit);
 
   const currentLeaves = leaves.slice(
     (currentPage - 1) * limit,
@@ -58,7 +57,7 @@ export default function EmployeeLeavePage() {
                 <td className="px-4 py-3">{leave.reason}</td>
                 <td className="px-4 py-3">
                   <span
-                    className={`rounded px-2 py-1 text-xs font-semibold ${
+                    className={`rounded p-2 text-xs font-semibold ${
                       leave.status === "Approved"
                         ? "bg-green-100 text-green-800"
                         : leave.status === "Pending"
@@ -75,58 +74,16 @@ export default function EmployeeLeavePage() {
         </table>
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between px-4 py-4 text-sm text-gray-600">
-        <div>
-          Showing{" "}
-          <span className="font-medium">{(currentPage - 1) * limit + 1}</span>{" "}
-          to{" "}
-          <span className="font-medium">
-            {Math.min(currentPage * limit, leaves.length)}
-          </span>{" "}
-          of <span className="font-medium">{leaves.length}</span> leaves
-        </div>
-
-        <div className="flex items-center gap-2">
-          <label htmlFor="limit" className="text-sm text-gray-700">
-            Show:
-          </label>
-          <select
-            id="limit"
-            value={limit}
-            onChange={(e) => {
-              setLimit(parseInt(e.target.value));
-              setCurrentPage(1); // reset to first page on limit change
-            }}
-            className="rounded border border-gray-300 bg-white px-2 py-1 text-sm"
-          >
-            {[10, 20, 50].map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-x-2">
-          <button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className="rounded border px-3 py-1 disabled:opacity-50"
-          >
-            Prev
-          </button>
-          <button
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-            }
-            disabled={currentPage === totalPages}
-            className="rounded border px-3 py-1 disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalItems={leaves.length}
+        limit={limit}
+        onPageChange={setCurrentPage}
+        onLimitChange={(newLimit) => {
+          setLimit(newLimit);
+          setCurrentPage(1);
+        }}
+      />
     </div>
   );
 }

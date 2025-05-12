@@ -1,16 +1,20 @@
 "use client";
 
-import { LayoutDashboard, LogOut, Menu, UserRoundX, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 interface SidebarProps {
   isOpen: boolean;
   toggleSidebar: () => void;
-  employeeId: string; // 👈 Pass this from parent or get from route
+  navItems: Array<{
+    href: string;
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+  }>;
 }
 
-const Sidebar = ({ isOpen, toggleSidebar, employeeId }: SidebarProps) => {
+const Sidebar = ({ isOpen, toggleSidebar, navItems }: SidebarProps) => {
   const router = useRouter();
 
   const handleLogout = () => {
@@ -20,19 +24,6 @@ const Sidebar = ({ isOpen, toggleSidebar, employeeId }: SidebarProps) => {
 
   const navItemClass =
     "flex items-center p-3 hover:bg-gray-700 rounded-md transition-colors duration-200 text-sm font-medium";
-
-  const navItems = [
-    {
-      href: `/employee/${employeeId}/dashboard`,
-      icon: LayoutDashboard,
-      label: "Dashboard",
-    },
-    {
-      href: `/employee/${employeeId}/leaves`,
-      icon: UserRoundX,
-      label: "Total Leaves",
-    },
-  ];
 
   return (
     <div
