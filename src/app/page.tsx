@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Building2, MoveLeftIcon } from "lucide-react";
+import { MoveLeftIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 type LoginFormProps = {
   type: string;
@@ -35,7 +36,7 @@ const LoginForm = ({ type, setType }: LoginFormProps) => {
       await new Promise((res) => setTimeout(res, 1000));
 
       // Navigate without full reload
-      if (type !== "admin") {
+      if (type !== "Admin") {
         router.push(`/${type.toLowerCase()}/1/dashboard`);
       } else {
         router.push(`/admin/dashboard`);
@@ -138,18 +139,22 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       {/* Logo Section - 50% */}
-      <div className="flex w-full items-center justify-center bg-slate-50 p-8 md:w-1/2 md:p-12">
-        <div className="flex max-w-md flex-col items-center text-center">
+      <div className="flex w-full items-center justify-center bg-slate-50 md:w-1/2 md:p-12">
+        <div className="flex w-full flex-col items-center text-center">
           <div className="mb-4 rounded-full bg-slate-100">
-            <Building2 className="h-16 w-16 text-slate-800" />
+            {/* <Building2 className="h-16 w-16 text-slate-800" /> */}
+            <Image
+              src="/logo.png"
+              alt="LeaveTrack Pro Logo"
+              width={9999}
+              height={9999}
+              className="h-36 w-36 rounded-full bg-slate-800 p-2"
+            />
           </div>
           <h1 className="mb-2 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
-            LeaveTrack Pro
+            Wisitech Infosolutions Pvt. Ltd.
           </h1>
-          <p className="text-slate-600">
-            Streamline your organization&apos;s leave management process with
-            our comprehensive solution
-          </p>
+          <p className="text-xl text-slate-600">Engage. Convert. Thrive. </p>
         </div>
       </div>
 
