@@ -1,22 +1,29 @@
 "use client";
 
-import { rltdb } from "@/app/firebase";
-import { get, ref } from "firebase/database";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import Link from "next/link";
-import { StaffData } from "@/app/types/user";
-import axios from "axios";
+import { SingleStaffData, StaffData } from "@/app/types/user";
+import { getStaffID } from "@/app/actions/staff/getStaffID";
+import { SignUp } from "@/app/actions/auth/signup";
+import { getSingleStaff } from "@/app/actions/staff/getSingleStaff";
+import Image from "next/image";
+import { X } from "lucide-react";
+import { uploadImage } from "@/app/actions/image/uploadImage";
+import { updateStaff } from "@/app/actions/staff/updateStaff";
 
 type StaffMode = "create" | "edit" | "view";
+interface StaffPageProps extends SingleStaffData {
+  [key: string]: any;
+}
 
 export default function SingleStaffPage() {
-  const { id, mode, staffID } = useParams<{
-    id: string;
-    mode: StaffMode;
-    staffID: string;
-  }>();
+  const {
+    id: adminID,
+    mode,
+    staffID,
+  } = useParams() as { id: string; mode: StaffMode; staffID: string };
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const router = useRouter();
 
@@ -30,30 +37,47 @@ export default function SingleStaffPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [data, setData] = useState<StaffData>({
+  const [data, setData] = useState<StaffPageProps>({
     profile: null,
     firstName: "",
-    middleName: "",
     lastName: "",
     phoneNo: "",
     designation: "",
     gender: "",
     role: "",
-    assignedUnder: [],
+    assignedUnder: "",
   });
 
   useEffect(() => {
     if (staffID === "new") {
-      const getStaffID = async () => {
-        const response = await get(ref(rltdb, "LastStaffID"));
-        const lastStaffID = response.val();
-        setID(lastStaffID);
+      const func = async () => {
+        const result = await getStaffID();
+        setID(result);
       };
-      getStaffID();
-    } else {
-      setID(staffID);
+
+      func();
     }
   }, [staffID]);
+
+  useEffect(() => {
+    if (mode !== "create") {
+      const fetchStaffData = async () => {
+        try {
+          const response = await getSingleStaff(staffID);
+          if (response.status === 200 && response.data) {
+            setData(response.data);
+            setID(response.data.staffID);
+          } else {
+            console.error("Error fetching staff data:", response.error);
+          }
+        } catch (error) {
+          console.error("Error fetching staff data:", error);
+        }
+      };
+
+      fetchStaffData();
+    }
+  }, [mode]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -94,6 +118,15 @@ export default function SingleStaffPage() {
     e.preventDefault();
     setLoading(true);
 
+    // Validate basic auth fields
+
+    if (mode === "create" && (!email || !password || !confirmPassword)) {
+      toast.error("Please fill in email and password fields.");
+      setLoading(false);
+      return;
+    }
+
+    // Validate required user fields
     const requiredFields = [
       { name: "firstName", label: "First Name" },
       { name: "lastName", label: "Last Name" },
@@ -101,17 +134,14 @@ export default function SingleStaffPage() {
       { name: "designation", label: "Designation" },
       { name: "gender", label: "Gender" },
       { name: "role", label: "Role" },
-      { name: "assignedUnder", label: "Assigned Under" },
     ];
 
-    if (!email || !password || !confirmPassword) {
-      toast.error("Please fill in all required fields.");
-      setLoading(false);
-      return;
+    // Conditionally require assignedUnder if role is employee
+    if (data.role === "employee") {
+      requiredFields.push({ name: "assignedUnder", label: "Assigned Under" });
     }
 
     const missingFields = requiredFields.filter((field) => !data[field.name]);
-
     if (missingFields.length > 0) {
       const missingNames = missingFields.map((f) => f.label).join(", ");
       toast.error(`Please fill in: ${missingNames}`);
@@ -119,41 +149,77 @@ export default function SingleStaffPage() {
       return;
     }
 
-    if (password !== confirmPassword) {
+    if (mode === "create" && password !== confirmPassword) {
       toast.error("Passwords do not match.");
       setLoading(false);
       return;
     }
 
-    const response = await axios.post("/api/signup", {
-      email,
-      password,
-      data,
-      staffID: ID,
-    });
+    try {
+      let url: string | null = null;
 
-    // if (response.status === 200) {
-    //   sessionStorage.setItem(
-    //     "user",
-    //     JSON.stringify({ name: response.name, role: response.role })
-    //   );
-    //   toast.success("User created successfully");
+      // Upload profile image if it's a File
+      if (data.profile && typeof data.profile !== "string") {
+        url = await uploadImage(data.profile, ID, "profile");
+        if (!url) {
+          toast.error("Error uploading image.");
+          setLoading(false);
+          return;
+        }
+      }
 
-    // } else {
-    //   setError(response.message);
-    // }
+      // Final profile URL to use
+      const profileUrl =
+        url ?? (typeof data.profile === "string" ? data.profile : "");
 
-    console.log(response);
-    router.push(`/admin/${id}/staff`);
+      // Edit or Create
+      if (mode === "edit") {
+        const response = await updateStaff(staffID, {
+          ...(data as StaffData),
+          profile: profileUrl,
+        });
 
-    setLoading(false);
+        if (response.status === 200) {
+          toast.success("User updated successfully");
+          router.push(`/admin/${adminID}/staff`);
+        } else {
+          setError(response.message);
+        }
+      } else if (mode === "create") {
+        const response = await SignUp(
+          email,
+          password,
+          {
+            ...data,
+            profile: profileUrl,
+          },
+          ID
+        );
+
+        if (response.status === 200) {
+          toast.success("User created successfully");
+          router.push(`/admin/${adminID}/staff`);
+        } else {
+          setError(response.message);
+        }
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast.error("Unexpected error occurred.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] lg:p-6 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">
-          {mode === "create" ? "New Staff" : "Edit Staff"}
+          {mode === "create"
+            ? "New Staff"
+            : mode === "edit"
+            ? "Edit Staff"
+            : "View Staff"}
         </h1>
       </div>
 
@@ -168,15 +234,78 @@ export default function SingleStaffPage() {
             <label htmlFor="profile" className="w-1/3 font-semibold">
               Profile Picture: <span className="text-red-500">*</span>
             </label>
-            <input
-              type="file"
-              id="profile"
-              className="w-full border p-2 rounded"
-              accept=".png, .jpg, .jpeg"
-              required
-              onChange={handleFileChange}
-              ref={fileInputRef}
-            />
+
+            {/* View Mode - Show button to open profile in new tab */}
+            {mode === "view" &&
+              data.profile &&
+              typeof data.profile === "string" && (
+                <div className="flex items-center gap-4">
+                  <Image
+                    width={9999}
+                    height={9999}
+                    src={data.profile}
+                    alt="Profile"
+                    className="h-24 w-24 object-cover rounded"
+                  />
+                  <a
+                    href={data.profile}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <button
+                      className="bg-blue-500 text-white text-sm px-3 py-1 w-fit rounded cursor-pointer"
+                      type="button"
+                    >
+                      View Profile
+                    </button>
+                  </a>
+                </div>
+              )}
+
+            {/* Edit Mode - Show image with remove button */}
+            {mode === "edit" &&
+              data.profile &&
+              typeof data.profile === "string" && (
+                <div className="flex flex-col gap-2">
+                  <div className="relative h-24 w-24">
+                    <Image
+                      width={96}
+                      height={96}
+                      src={data.profile}
+                      alt="Profile Preview"
+                      className="h-full w-full object-cover rounded"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({ ...prev, profile: null }));
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = "";
+                        }
+                      }}
+                      className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-1 shadow-md cursor-pointer"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            {/* Show input if mode is create OR profile has been removed in edit */}
+            {(mode === "create" || mode === "edit") && (
+              <input
+                type="file"
+                id="profile"
+                className={`${
+                  mode === ("view" as StaffMode)
+                    ? "w-full border bg-gray-400 text-white placeholder:text-white p-2 rounded cursor-not-allowed"
+                    : "w-full border p-2 rounded"
+                }`}
+                accept=".png, .jpg, .jpeg"
+                onChange={handleFileChange}
+                ref={fileInputRef}
+              />
+            )}
           </div>
 
           <div className="flex flex-col gap-1">
@@ -187,10 +316,15 @@ export default function SingleStaffPage() {
               type="text"
               id="firstName"
               name="firstName"
-              className="w-full border p-2 rounded"
+              value={data.firstName}
+              className={`${
+                mode === ("view" as StaffMode)
+                  ? "w-full border bg-gray-400 text-white placeholder:text-white p-2 rounded cursor-not-allowed"
+                  : "w-full border p-2 rounded"
+              }`}
               placeholder="Enter first name"
-              required
               onChange={handleChange}
+              readOnly={mode === "view"}
             />
           </div>
 
@@ -202,10 +336,15 @@ export default function SingleStaffPage() {
               type="text"
               id="lastName"
               name="lastName"
+              value={data.lastName}
               onChange={handleChange}
-              className="w-full border p-2 rounded"
+              className={`${
+                mode === ("view" as StaffMode)
+                  ? "w-full border bg-gray-400 text-white placeholder:text-white p-2 rounded cursor-not-allowed"
+                  : "w-full border p-2 rounded"
+              }`}
               placeholder="Enter last name"
-              required
+              readOnly={mode === "view"}
             />
           </div>
 
@@ -217,10 +356,15 @@ export default function SingleStaffPage() {
               type="tel"
               id="phoneNo"
               name="phoneNo"
+              value={data.phoneNo}
               onChange={handleChange}
-              className="w-full border p-2 rounded"
+              className={`${
+                mode === ("view" as StaffMode)
+                  ? "w-full border bg-gray-400 text-white placeholder:text-white p-2 rounded cursor-not-allowed"
+                  : "w-full border p-2 rounded"
+              }`}
               placeholder="Enter phone number"
-              required
+              readOnly={mode === "view"}
             />
           </div>
 
@@ -232,9 +376,15 @@ export default function SingleStaffPage() {
               type="text"
               id="designation"
               name="designation"
+              value={data.designation}
               onChange={handleChange}
-              className="w-full border p-2 rounded"
-              placeholder="Enter address"
+              className={`${
+                mode === ("view" as StaffMode)
+                  ? "w-full border bg-gray-400 text-white placeholder:text-white p-2 rounded cursor-not-allowed"
+                  : "w-full border p-2 rounded"
+              }`}
+              placeholder="Enter Designation"
+              readOnly={mode === "view"}
             />
           </div>
 
@@ -247,13 +397,17 @@ export default function SingleStaffPage() {
               {["male", "female", "other"].map((g) => (
                 <div className="flex items-center gap-2" key={g}>
                   <input
-                    id="gender"
+                    id={`gender-${g}`}
                     name="gender"
                     type="radio"
                     value={g}
                     onChange={handleChange}
-                  />{" "}
-                  {g.charAt(0).toUpperCase() + g.slice(1)}
+                    checked={data.gender === g}
+                    disabled={mode === "view"}
+                  />
+                  <label htmlFor={`gender-${g}`}>
+                    {g.charAt(0).toUpperCase() + g.slice(1)}
+                  </label>
                 </div>
               ))}
             </div>
@@ -261,28 +415,8 @@ export default function SingleStaffPage() {
         </div>
 
         <div className="flex flex-col gap-4 bg-white shadow-md rounded">
-          <div className="flex flex-col gap-4 text-gray-500 p-4">
+          <div className="flex flex-col gap-4 text-gray-500 p-4 pb-0">
             <h3 className="text-lg font-bold uppercase">Company Details</h3>
-
-            {/* <div className="flex flex-col gap-1">
-              <label htmlFor="department" className="w-1/3 font-semibold">
-                Department: <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="department"
-                name="department"
-                onChange={handleChange}
-                className="w-full border p-2 rounded"
-                required
-              >
-                <option value="">Select department</option>
-                {["HR", "IT", "Finance"].map((dept) => (
-                  <option key={dept} value={dept}>
-                    {dept}
-                  </option>
-                ))}
-              </select>
-            </div> */}
 
             <div className="flex flex-col gap-1">
               <label htmlFor="staffId" className="w-1/3 font-semibold">
@@ -299,68 +433,75 @@ export default function SingleStaffPage() {
               />
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label htmlFor="email" className="w-1/3 font-semibold">
-                Email:
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full border p-2 rounded"
-                placeholder="Enter staff email"
-              />
-            </div>
+            {mode === "create" && (
+              <>
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="email" className="w-1/3 font-semibold">
+                    Email:
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full border p-2 rounded"
+                    placeholder="Enter staff email"
+                  />
+                </div>
 
-            <div className="flex flex-col gap-1">
-              <label htmlFor="password" className="w-1/3 font-semibold">
-                Password: <span className="text-red-500">*</span>
-              </label>
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="password" className="w-1/3 font-semibold">
+                    Password: <span className="text-red-500">*</span>
+                  </label>
 
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full border p-2 rounded"
-                  placeholder="Enter password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
-                >
-                  {showPassword ? "Hide" : "Show"}
-                </button>
-              </div>
-            </div>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      id="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full border p-2 rounded"
+                      placeholder="Enter password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                </div>
 
-            <div className="flex flex-col gap-1">
-              <label htmlFor="confirmPassword" className="w-1/3 font-semibold">
-                Confirm Password: <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  id="confirmPassword"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full border p-2 rounded"
-                  placeholder="Confirm password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
-                >
-                  {showConfirmPassword ? "Hide" : "Show"}
-                </button>
-              </div>
-            </div>
+                <div className="flex flex-col gap-1">
+                  <label
+                    htmlFor="confirmPassword"
+                    className="w-1/3 font-semibold"
+                  >
+                    Confirm Password: <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      id="confirmPassword"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full border p-2 rounded"
+                      placeholder="Confirm password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                    >
+                      {showConfirmPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="flex flex-col gap-1">
               <label htmlFor="role" className="w-1/3 font-semibold">
@@ -368,58 +509,112 @@ export default function SingleStaffPage() {
               </label>
 
               <div className="flex gap-4">
-                {["Employee", "Manager", "Admin"].map((r) => (
-                  <div className="flex items-center gap-2" key={r}>
-                    <input
-                      id="role"
-                      name="role"
-                      type="radio"
-                      value={r}
-                      onChange={handleChange}
-                    />{" "}
-                    {r}
-                  </div>
-                ))}
+                {["Employee", "Manager", "Admin"].map((role) => {
+                  const value = role.toLowerCase();
+                  const isDisabled = mode === "view";
+
+                  return (
+                    <div className="flex items-center gap-2" key={role}>
+                      <input
+                        id={`role-${value}`}
+                        name="role"
+                        type="radio"
+                        value={value}
+                        onChange={handleChange}
+                        checked={data.role === value}
+                        disabled={isDisabled}
+                      />
+                      <label
+                        htmlFor={`role-${value}`}
+                        className={isDisabled ? "text-gray-500" : ""}
+                      >
+                        {role}
+                      </label>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {data.role === "Employee" && (
+            {data.role === "employee" && (
               <div className="flex flex-col gap-1">
                 <label className="w-1/3 font-semibold" htmlFor="assignedUnder">
                   Assigned Under: <span className="text-red-500">*</span>
                 </label>
-                <select
-                  id="assignedUnder"
-                  name="assignedUnder"
-                  onChange={handleChange}
-                  required
-                  className="w-full border p-2 rounded"
-                >
-                  <option value="">Not Selected</option>
-                  {["Manager 1", "Manager 2", "Manager 3"].map((m, index) => (
-                    <option key={index} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
+
+                {mode !== "view" && (
+                  <select
+                    id="assignedUnder"
+                    name="assignedUnder"
+                    value={data.assignedUnder || ""}
+                    onChange={handleChange}
+                    className="w-full border p-2 rounded"
+                  >
+                    <option value="">Not Selected</option>
+                    {["Manager 1", "Manager 2", "Manager 3"].map((m, index) => (
+                      <option key={index} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                {mode === "view" && (
+                  <input
+                    type="text"
+                    id="assignedUnder"
+                    name="assignedUnder"
+                    value={data.assignedUnder}
+                    className="w-full border bg-gray-400 text-white placeholder:text-white p-2 rounded cursor-not-allowed"
+                    placeholder="Assigned Under"
+                    readOnly
+                  />
+                )}
               </div>
+            )}
+            {error && (
+              <span className="text-red-500 text-sm mt-2">{error}</span>
             )}
           </div>
 
-          <div className="flex items-center justify-center gap-4 px-4">
+          <div className="flex items-center justify-center gap-4 p-4">
             <Link href={`/admin/${staffID}/staff`} className="w-full">
               <button className="mx-auto w-full bg-red-500 text-white py-2 rounded cursor-pointer">
                 Cancel
               </button>
             </Link>
 
-            <button
-              className="w-full bg-green-500 text-white py-2 rounded cursor-pointer"
-              type="submit"
-              disabled={loading}
-            >
-              Submit
-            </button>
+            {mode === "create" && (
+              <button
+                className="w-full bg-green-500 text-white py-2 rounded cursor-pointer"
+                type="submit"
+                disabled={loading}
+              >
+                Submit
+              </button>
+            )}
+
+            {mode === "edit" && (
+              <button
+                className="w-full bg-green-500 text-white py-2 rounded cursor-pointer"
+                type="submit"
+                disabled={loading}
+              >
+                Save
+              </button>
+            )}
+
+            {mode === "view" && (
+              <button
+                className="w-full bg-blue-500 text-white py-2 rounded cursor-pointer"
+                onClick={() => {
+                  router.push(`/admin/${adminID}/staff/${staffID}/edit`);
+                }}
+                type="button"
+              >
+                Update
+              </button>
+            )}
           </div>
         </div>
       </form>

@@ -1,13 +1,19 @@
 export type UserRole = "admin" | "manager" | "employee";
 
-export interface StaffData {
-  profile: File | null;
+export interface SingleStaffData {
+  profile: File | null | string;
   firstName: string;
   lastName: string;
   gender: string;
   phoneNo: string;
   designation: string;
-  assignedUnder: string[];
+  assignedUnder: string;
   role: string;
-  [key: string]: string | string[] | File | null;
+}
+
+export interface StaffData extends SingleStaffData {
+  staffID: string;
+  id: string;
+  email: string;
+  joiningDate: string;
 }

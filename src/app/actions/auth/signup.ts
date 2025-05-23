@@ -1,9 +1,9 @@
 "use server";
 
-import { adminAuth, db, rltdb } from "@/app/firebase";
-import { StaffData } from "@/app/types/user";
+import { adminAuth, rltdb } from "@/app/firebase";
+import { SingleStaffData } from "@/app/types/user";
 import { ref, set } from "firebase/database";
-import { doc, setDoc } from "firebase/firestore";
+import { createStaff } from "@/app/actions/staff/createStaff";
 
 function getNextStaffId(currentId: string): string {
   const prefix = currentId.match(/^[A-Za-z]+/)?.[0] || "";
@@ -17,7 +17,7 @@ function getNextStaffId(currentId: string): string {
 export async function SignUp(
   email: string,
   password: string,
-  data: StaffData,
+  data: SingleStaffData,
   staffID: string
 ) {
   const newUser = await adminAuth.createUser({
@@ -32,30 +32,34 @@ export async function SignUp(
     role: data.role.toLowerCase(),
   });
 
-  await setDoc(doc(db, "users", userId), {
-    uid: userId,
-    staffID,
-    email,
-    profile: data.profile,
-    firstName: data.firstName,
-    lastName: data.lastName,
-    gender: data.gender,
-    phoneNo: data.phoneNo,
-    designation: data.designation,
-    assignedUnder: data.assignedUnder,
-    role: data.role.toLowerCase(),
-  });
+  try {
+    await createStaff(userId, staffID, email, data);
 
-  const nextStaffID = getNextStaffId(staffID);
-  await set(ref(rltdb, "LastStaffID"), {
-    LastStaffID: nextStaffID,
-  });
+    const nextStaffID = getNextStaffId(staffID);
+    await set(ref(rltdb), {
+      LastStaffID: nextStaffID,
+    });
 
-  return {
-    uid: userId,
-    name: `${data.firstName} ${data.lastName}`,
-    role: data.role.toLowerCase(),
-    message: "Staff created successfully",
-    status: 200,
-  };
+    return {
+      uid: userId,
+      name: `${data.firstName} ${data.lastName}`,
+      role: data.role.toLowerCase(),
+      message: "Staff created successfully",
+      status: 200,
+    };
+  } catch (error) {
+    console.error("Error creating user:", error);
+    if (userId) {
+      await adminAuth.deleteUser(userId);
+
+      await set(ref(rltdb), {
+        LastStaffID: staffID,
+      });
+    }
+
+    return {
+      message: "Error creating user",
+      status: 500,
+    };
+  }
 }

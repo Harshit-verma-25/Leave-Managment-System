@@ -1,6 +1,5 @@
 "use client";
 
-import axios from "axios";
 import {
   LogOut,
   Menu,
@@ -12,6 +11,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserRole } from "@/app/types/user";
+import { Logout } from "@/app/actions/auth/logout";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -24,11 +24,12 @@ const Sidebar = ({ isOpen, toggleSidebar, role, userId }: SidebarProps) => {
   const router = useRouter();
 
   const handleLogout = async () => {
-    const response = await axios.post("/api/adminAuth/logout");
+    const response = await Logout();
     if (response.status === 200) {
+      sessionStorage.removeItem("user");
       router.push("/");
     } else {
-      console.error("Logout failed");
+      console.error("Logout failed", response.error);
     }
   };
 

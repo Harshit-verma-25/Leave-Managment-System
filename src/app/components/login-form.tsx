@@ -37,8 +37,8 @@ export const LoginForm = ({ type, setType }: LoginFormProps) => {
       role: type,
     });
 
-    console.log(response);
-
+    // console.log(response);
+    
     if (response.status === 200) {
       sessionStorage.setItem(
         "user",

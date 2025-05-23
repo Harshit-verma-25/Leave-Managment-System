@@ -1,40 +1,34 @@
 "use client";
 
+import { getAllStaff } from "@/app/actions/staff/getAllStaff";
 import { Card } from "@/app/components/card";
+import { StaffData } from "@/app/types/user";
 import { User2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function StaffPage() {
   const { id: adminId } = useParams();
 
-  const data = [
-    {
-      id: 1,
-      name: "John Doe",
-      position: "Software Engineer",
-      image: null,
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      position: "Product Manager",
-      image: null,
-    },
-    {
-      id: 3,
-      name: "Alice Johnson",
-      position: "UX Designer",
-      image: null,
-    },
-    {
-      id: 4,
-      name: "Bob Brown",
-      position: "Data Analyst",
-      image: null,
-    },
-  ];
+  const [data, setData] = useState<StaffData[] | null>(null);
+
+  useEffect(() => {
+    const fetchStaffData = async () => {
+      try {
+        const response = await getAllStaff();
+        if (response.status === 200) {
+          setData((response.data as StaffData[]) ?? []);
+        } else {
+          console.error("Error fetching staff data:", response.message);
+        }
+      } catch (error) {
+        console.error("Error fetching staff data:", error);
+      }
+    };
+    fetchStaffData();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] lg:p-6 p-4">
@@ -50,41 +44,51 @@ export default function StaffPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {data.map((staff) => (
-          <Card key={staff.id} className="p-4 flex flex-col items-center">
-            <div className="mb-4 h-32 w-32 rounded-full flex items-center justify-center">
-              {staff.image ? (
-                <Image
-                  src={staff.image}
-                  alt={staff.name}
-                  width={100}
-                  height={100}
-                  className="rounded-full"
-                />
-              ) : (
-                <User2 className="h-32 w-32 rounded-full border-2 border-gray-300" />
-              )}
-            </div>
-            <h2 className="text-lg font-semibold">{staff.name}</h2>
-            <p className="text-gray-600 mb-4">{staff.position}</p>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {data && data.length > 0 ? (
+          data.map((staff) => (
+            <Card key={staff.id} className="p-4 flex flex-col items-center">
+              <div className="mb-4 h-48 rounded-full flex items-center justify-center">
+                {typeof staff.profile === "string" && staff.profile ? (
+                  <Image
+                    src={staff.profile || ""}
+                    alt={`${staff.firstName} ${staff.lastName} Profile`}
+                    width={9999}
+                    height={9999}
+                    className="h-full w-full object-cover rounded"
+                  />
+                ) : (
+                  <User2 className="h-full w-full rounded-full border-2 border-gray-300" />
+                )}
+              </div>
+              <p className="text-justify mb-4">
+                <span className="font-bold text-gray-900">
+                  {staff.firstName} {staff.lastName}
+                </span>{" "}
+                | {staff.designation}
+              </p>
 
-            <div className="flex gap-2">
-              <Link
-                href={`/admin/${adminId}/staff/${staff.id}/view`}
-                className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                View
-              </Link>
-              <Link
-                href={`/admin/${adminId}/staff/${staff.id}/edit`}
-                className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600"
-              >
-                Edit
-              </Link>
-            </div>
-          </Card>
-        ))}
+              <div className="flex gap-2">
+                <Link
+                  href={`/admin/${adminId}/staff/${staff.id}/view`}
+                  className="p-2 text-xs bg-black text-white rounded"
+                >
+                  View
+                </Link>
+                <Link
+                  href={`/admin/${adminId}/staff/${staff.id}/edit`}
+                  className="p-2 text-xs bg-black text-white rounded"
+                >
+                  Edit
+                </Link>
+              </div>
+            </Card>
+          ))
+        ) : (
+          <div className="col-span-1 md:col-span-2 lg:col-span-4 flex items-center justify-center h-full">
+            <p className="text-gray-500">No staff found</p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -35,3 +35,21 @@ export interface ApplyLeaveProps {
   appliedOn: string;
   status: LeaveStatus;
 }
+
+export interface LeaveHistoryProps {
+  id: string;
+  leaveType: LeaveType;
+  leave: string;
+  startDate: string;
+  endDate: string;
+  noOfDays: number;
+  addressDuringLeave: string;
+  emergencyContactName: string;
+  emergencyContactNumber: string;
+  delegatedTo: string;
+  reason: string;
+  appliedOn: string;
+  status: LeaveStatus;
+  attachment: string | null;
+  approvedBy: string | null;
+}

@@ -138,13 +138,13 @@ export default function NewLeaveRequest() {
     setIsSubmitting(true);
 
     setTimeout(() => {
-      console.log("Request submitted");
+      // console.log("Request submitted");
 
       setIsSubmitting(false);
       // router.push("/employee/1/leaves");
     }, 1000);
   };
-  console.log(formData);
+  // console.log(formData);
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] lg:p-6 p-4">

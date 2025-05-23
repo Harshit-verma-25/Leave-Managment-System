@@ -1,13 +1,16 @@
 "use client";
 import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { LEAVE_TYPES, ApplyLeaveProps } from "@/app/types/leaves";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { toast } from "react-toastify";
 import { differenceInCalendarDays, isBefore } from "date-fns";
+import { uploadImage } from "@/app/actions/image/uploadImage";
+import { createLeave } from "@/app/actions/leave/createLeave";
 
 export default function NewLeaveRequest() {
+  const { id: employeeId } = useParams() as { id: string };
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -125,7 +128,6 @@ export default function NewLeaveRequest() {
       return;
     }
 
-    // Default update
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -134,17 +136,59 @@ export default function NewLeaveRequest() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      console.log("Request submitted");
+    // Validate required fields
+    const requiredFields = [
+      "leaveType",
+      "startDate",
+      "endDate",
+      "addressDuringLeave",
+      "emergencyContactName",
+      "emergencyContactNumber",
+      "delegatedTo",
+      "reason",
+    ];
 
+    for (const field of requiredFields) {
+      if (!formData[field as keyof ApplyLeaveProps]) {
+        toast.error(`Please fill in the ${field.replace(/([A-Z])/g, " $1")}.`);
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    try {
+      let url: string | null = null;
+      if (attachment) {
+        url = await uploadImage(attachment, employeeId, "leave-attachments");
+
+        if (!url) {
+          toast.error("Failed to upload attachment.");
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      const response = await createLeave(
+        { ...formData, attachment: url || "" },
+        employeeId
+      );
+
+      if (response.status === 200) {
+        toast.success("Leave application submitted successfully.");
+        router.push(`/manager/${employeeId}/leaves`);
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error) {
+      console.error("Error submitting leave application:", error);
+      toast.error("An error occurred while submitting the application.");
+    } finally {
       setIsSubmitting(false);
-      // router.push("/employee/1/leaves");
-    }, 1000);
+    }
   };
-  console.log(formData);
+  // console.log(formData);
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] lg:p-6 p-4">
