@@ -1,9 +1,14 @@
+"use client";
+
 import { Card } from "@/app/components/card";
 import { User2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 
 export default function StaffPage() {
+  const { id: adminId } = useParams();
+
   const data = [
     {
       id: 1,
@@ -38,11 +43,8 @@ export default function StaffPage() {
       </div>
 
       <div className="mb-6 flex items-center justify-end">
-        <Link href="/admin/staff/create/new">
-          <button
-            className="rounded bg-black px-4 py-2 text-white cursor-pointer"
-            //   onClick={openAddModal}
-          >
+        <Link href={`/admin/${adminId}/staff/new/create`}>
+          <button className="rounded bg-black px-4 py-2 text-white cursor-pointer">
             Add New Staff
           </button>
         </Link>
@@ -65,7 +67,22 @@ export default function StaffPage() {
               )}
             </div>
             <h2 className="text-lg font-semibold">{staff.name}</h2>
-            <p className="text-gray-600">{staff.position}</p>
+            <p className="text-gray-600 mb-4">{staff.position}</p>
+
+            <div className="flex gap-2">
+              <Link
+                href={`/admin/${adminId}/staff/${staff.id}/view`}
+                className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                View
+              </Link>
+              <Link
+                href={`/admin/${adminId}/staff/${staff.id}/edit`}
+                className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600"
+              >
+                Edit
+              </Link>
+            </div>
           </Card>
         ))}
       </div>

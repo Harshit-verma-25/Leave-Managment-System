@@ -2,79 +2,65 @@
 
 import Header from "@/app/components/header";
 import Sidebar from "@/app/components/sidebar";
-import {
-  // CalendarClock,
-  LayoutDashboard,
-  Network,
-  User2Icon,
-} from "lucide-react";
-// import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { UserRole } from "@/app/types/user";
 
-export default function AdminDashboardLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  //   const router = useRouter();
-
-  const navItems = [
-    {
-      href: `/admin/dashboard`,
-      icon: LayoutDashboard,
-      label: "Dashboard",
-    },
-    {
-      href: `/admin/departments`,
-      icon: Network,
-      label: "Departments",
-    },
-    {
-      href: `/admin/staff`,
-      icon: User2Icon,
-      label: "Staff",
-    },
-    // {
-    //   href: `/admin/leave-type`,
-    //   icon: CalendarClock,
-    //   label: "Leave Type",
-    // },
-  ];
+  const params = useParams();
+  const adminId = params?.id as string;
 
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [user, setUser] = useState<{
+    name: string;
+    role: UserRole;
+  }>({
+    name: "",
+    role: "employee",
+  });
 
   useEffect(() => {
     if (window.innerWidth < 1024) {
       setSidebarOpen(false);
     }
+  }, []);
 
-    // const subscribe = auth.onAuthStateChanged((user) => {
-    //   if (!user) {
-    //     router.push("/login");
-    //   }
-    // });
+  useEffect(() => {
+    const getUser = () => {
+      const user = sessionStorage.getItem("user");
+      if (user) {
+        const parsedUser = JSON.parse(user);
 
-    // return () => subscribe();
+        setUser({
+          name: parsedUser.name,
+          role: parsedUser.role,
+        });
+      }
+    };
+
+    getUser();
   }, []);
 
   const toggleSidebar = () => {
     setSidebarOpen(!isSidebarOpen);
   };
+
   return (
     <>
-      <Header userName="John Doe" />
+      <Header userName={user.name} />
       <div className="flex flex-grow relative">
-        {/* Sidebar */}
         <Sidebar
           isOpen={isSidebarOpen}
           toggleSidebar={toggleSidebar}
-          navItems={navItems}
+          role={user.role}
+          userId={adminId}
         />
 
-        {/* Main content */}
-        <div
-          className={`flex-grow py-4 lg:px-6 px-4 transition-all duration-300`}
-        >
+        <div className="flex-grow py-4 lg:px-6 px-4 transition-all duration-300">
           {children}
         </div>
       </div>

@@ -6,13 +6,13 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { UserRole } from "@/app/types/user";
 
-export default function EmployeeLayout({
+export default function ManagerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const params = useParams();
-  const employeeId = params?.id as string;
+  const managerId = params?.id as string;
 
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [user, setUser] = useState<{
@@ -57,7 +57,7 @@ export default function EmployeeLayout({
           isOpen={isSidebarOpen}
           toggleSidebar={toggleSidebar}
           role={user.role}
-          userId={employeeId}
+          userId={managerId}
         />
 
         <div className="flex-grow py-4 lg:px-6 px-4 transition-all duration-300">

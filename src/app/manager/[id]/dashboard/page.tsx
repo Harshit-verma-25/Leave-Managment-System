@@ -173,20 +173,11 @@ export default function ManagerDashboard() {
         </div>
       )}
 
-      <div className="min-h-screen bg-[#f8f9fa] lg:p-6 p-4">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Manager Dashboard
-          </h1>
+      <div className="min-h-screen lg:p-6 p-4">
+        <h1 className="text-3xl font-bold text-gray-900">Manager Dashboard</h1>
 
-          <Link href="/">
-            <button className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md flex items-center gap-2 cursor-pointer">
-              <LogOutIcon className="h-4 w-4" /> Logout
-            </button>
-          </Link>
-        </div>
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-1">Leave Requests</h2>
+        <div className="rounded-lg p-6">
+          <h2 className="text-2xl font-semibold mb-1">Leave Requests</h2>
           <p className="text-sm text-gray-500 mb-4">
             Manage leave requests from your team members
           </p>

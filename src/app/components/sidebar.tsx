@@ -1,29 +1,74 @@
 "use client";
 
-import { LogOut, Menu, X } from "lucide-react";
+import axios from "axios";
+import {
+  LogOut,
+  Menu,
+  X,
+  LayoutDashboard,
+  UserRoundX,
+  User2Icon,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { UserRole } from "@/app/types/user";
 
 interface SidebarProps {
   isOpen: boolean;
   toggleSidebar: () => void;
-  navItems: Array<{
-    href: string;
-    icon: React.ComponentType<{ className?: string }>;
-    label: string;
-  }>;
+  role: UserRole;
+  userId: string;
 }
 
-const Sidebar = ({ isOpen, toggleSidebar, navItems }: SidebarProps) => {
+const Sidebar = ({ isOpen, toggleSidebar, role, userId }: SidebarProps) => {
   const router = useRouter();
 
-  const handleLogout = () => {
-    console.log("Logging out...");
-    router.push("/");
+  const handleLogout = async () => {
+    const response = await axios.post("/api/adminAuth/logout");
+    if (response.status === 200) {
+      router.push("/");
+    } else {
+      console.error("Logout failed");
+    }
   };
 
   const navItemClass =
     "flex items-center p-3 hover:bg-gray-700 rounded-md transition-colors duration-200 text-sm font-medium";
+
+  const commonItems = [
+    {
+      label: "Dashboard",
+      href: `/${role}/${userId}/dashboard`,
+      icon: LayoutDashboard,
+    },
+  ];
+
+  const roleBasedItems = {
+    admin: [
+      {
+        label: "Staff",
+        href: `/admin/${userId}/staff`,
+        icon: User2Icon,
+      },
+      // You can add more admin-specific items here
+    ],
+    manager: [
+      {
+        label: "Leave Records",
+        href: `/manager/${userId}/leaves`,
+        icon: UserRoundX,
+      },
+    ],
+    employee: [
+      {
+        label: "Leave Records",
+        href: `/employee/${userId}/leaves`,
+        icon: UserRoundX,
+      },
+    ],
+  };
+
+  const navItems = [...commonItems, ...(roleBasedItems[role] || [])];
 
   return (
     <div
@@ -31,7 +76,6 @@ const Sidebar = ({ isOpen, toggleSidebar, navItems }: SidebarProps) => {
         isOpen ? "min-w-60" : "w-20"
       } transition-all duration-300 flex flex-col`}
     >
-      {/* Toggle Button */}
       <div className="flex items-center justify-between p-4 bg-black">
         {isOpen && <h2 className="text-lg font-semibold">Menu</h2>}
         <button
@@ -44,7 +88,6 @@ const Sidebar = ({ isOpen, toggleSidebar, navItems }: SidebarProps) => {
         </button>
       </div>
 
-      {/* Sidebar Content */}
       <nav className="mt-4 flex-grow overflow-y-auto px-2">
         <ul className="space-y-2">
           {navItems.map(({ href, icon: Icon, label }) => (
@@ -60,6 +103,7 @@ const Sidebar = ({ isOpen, toggleSidebar, navItems }: SidebarProps) => {
               </Link>
             </li>
           ))}
+
           <li>
             <button
               onClick={handleLogout}
