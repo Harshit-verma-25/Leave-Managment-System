@@ -114,6 +114,15 @@ export default function SingleStaffPage() {
     }));
   };
 
+  function toBase64(file: File): Promise<string | ArrayBuffer | null> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -158,19 +167,16 @@ export default function SingleStaffPage() {
     try {
       let url: string | null = null;
 
-      // Upload profile image if it's a File
+      // Upload image if it exists
       if (data.profile && typeof data.profile !== "string") {
-        url = await uploadImage(data.profile, ID, "profile");
-        if (!url) {
-          toast.error("Error uploading image.");
-          setLoading(false);
-          return;
+        const base64 = await toBase64(data.profile);
+        if (typeof base64 === "string") {
+          const response = await uploadImage(base64, ID, "profiles");
+          url = response;
         }
       }
 
-      // Final profile URL to use
-      const profileUrl =
-        url ?? (typeof data.profile === "string" ? data.profile : "");
+      const profileUrl = url || data.profile;
 
       // Edit or Create
       if (mode === "edit") {

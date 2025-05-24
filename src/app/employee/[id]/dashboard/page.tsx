@@ -7,13 +7,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/app/components/card";
-import { User2Icon } from "lucide-react";
-import { LEAVE_TYPES } from "@/app/types/leaves";
-import Image from "next/image";
 import Link from "next/link";
 import data from "@/app/data.json";
+import { useParams } from "next/navigation";
 
 const DashboardPage = () => {
+  const { id } = useParams() as { id: string };
   const colors = [
     "#8742f5",
     "#f542e0",
@@ -74,7 +73,7 @@ const DashboardPage = () => {
             <div className="flex items-center justify-between">
               <CardTitle>Leave History</CardTitle>
 
-              <Link href={`/employee/1/leaves`} className="text-sm">
+              <Link href={`/employee/${id}/leaves`} className="text-sm">
                 <button className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer">
                   View All
                 </button>

@@ -9,11 +9,14 @@ interface CreateLeave extends ApplyLeaveProps {
   attachment: string | null;
 }
 
-export async function createLeave(data: CreateLeave, employeeID: string) {
+export async function createLeave(
+  data: CreateLeave,
+  employeeID: string,
+  leaveID: string
+) {
   try {
-    const leaveID = nanoid();
-    const leaveRef = doc(db, "leaves", employeeID, leaveID);
-    await setDoc(leaveRef, data);
+    const leaveRef = doc(db, "leaves", employeeID);
+    await setDoc(leaveRef, { [leaveID]: data }, { merge: true });
 
     return {
       status: 200,

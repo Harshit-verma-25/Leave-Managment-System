@@ -51,5 +51,5 @@ export interface LeaveHistoryProps {
   appliedOn: string;
   status: LeaveStatus;
   attachment: string | null;
-  approvedBy: string | null;
+  // approvedBy: string | null;
 }

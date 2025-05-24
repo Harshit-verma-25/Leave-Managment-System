@@ -7,33 +7,18 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY!,
   api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
-
-function toBase64(file: File): Promise<string | ArrayBuffer | null> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = (error) => reject(error);
-  });
-}
-
 export async function uploadImage(
-  file: File,
+  base64: string,
   name: string,
   folderName: string
 ): Promise<string> {
   try {
-    const base64 = await toBase64(file);
-
-    if (typeof base64 !== "string") {
-      throw new Error("Failed to convert file to base64");
-    }
-
     const result = await cloudinary.uploader.upload(base64, {
       folder: folderName,
       public_id: name,
       overwrite: true,
       allowed_formats: ["jpg", "png", "jpeg", "pdf"],
+      resource_type: "auto",
     });
 
     return result.secure_url;
