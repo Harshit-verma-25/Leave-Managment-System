@@ -3,41 +3,10 @@
 import { adminAuth, clientAuth } from "@/app/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 
-export async function Login(data: {
-  email: string;
-  password: string;
-  role: string;
-}) {
-  const { email, password } = data;
-
+export async function Login(data: { token: string; role: string }) {
   try {
-    const existingUser = await adminAuth.getUserByEmail(email);
-
-    if (!existingUser) {
-      return {
-        status: 404,
-        message: "User not found",
-      };
-    }
-
-    // Sign in using Firebase Client SDK
-    const userDetails = await signInWithEmailAndPassword(
-      clientAuth,
-      email,
-      password
-    );
-
-    if (!userDetails) {
-      return {
-        status: 401,
-        message: "Invalid credentials",
-      };
-    }
-
-    const token = await userDetails.user.getIdToken();
-
     // Verify token using Admin SDK
-    const decodedToken = await adminAuth.verifyIdToken(token);
+    const decodedToken = await adminAuth.verifyIdToken(data.token);
 
     if (!decodedToken) {
       return {
