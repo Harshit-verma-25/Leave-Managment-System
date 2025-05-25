@@ -8,12 +8,7 @@ import {
 import Image from "next/image";
 import { X } from "lucide-react";
 import { toast } from "react-toastify";
-import {
-  differenceInCalendarDays,
-  eachDayOfInterval,
-  isBefore,
-  parseISO,
-} from "date-fns";
+import { eachDayOfInterval, isBefore, parseISO } from "date-fns";
 import { uploadImage } from "@/app/actions/image/uploadImage";
 import { createLeave } from "@/app/actions/leave/createLeave";
 import { nanoid } from "nanoid";

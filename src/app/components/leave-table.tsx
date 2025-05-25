@@ -13,7 +13,7 @@ export const LeaveTable = ({ role }: { role: string }) => {
   >("PENDING");
 
   const [data, setData] = useState<LeaveHistoryProps[] | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  // const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     // Fetch leave requests from the server
@@ -28,17 +28,14 @@ export const LeaveTable = ({ role }: { role: string }) => {
       } catch (error) {
         console.error("Error fetching leave requests:", error);
       } finally {
-        setLoading(false);
+        // setLoading(false);
       }
     };
 
     fetchLeaveRequests();
   }, [id]);
 
-  console.log("Leave Requests Data:", data);
-
   const filteredRequests = data && data.filter((r) => r.status === selectedTab);
-  console.log("Filtered Requests:", filteredRequests);
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] p-6">
@@ -96,7 +93,8 @@ export const LeaveTable = ({ role }: { role: string }) => {
                   </span>
                 </div>
                 <p className="text-sm text-gray-700 mb-1">
-                  <strong>Start Date: </strong> {formatDate(req.startDate ?? "")}
+                  <strong>Start Date: </strong>{" "}
+                  {formatDate(req.startDate ?? "")}
                 </p>
                 <p className="text-sm text-gray-700 mb-1">
                   <strong>End Date: </strong> {formatDate(req.endDate ?? "")}

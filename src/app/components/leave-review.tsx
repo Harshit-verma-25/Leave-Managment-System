@@ -22,11 +22,10 @@ export default function LeaveReviewModal({
   approverId,
   selectedTab,
 }: LeaveReviewModalProps) {
-  if (!isOpen || !leaveData) return null;
-
-  console.log(leaveData);
   const [commentModal, setCommentModal] = useState(false);
   const [comment, setComment] = useState("");
+
+  if (!isOpen || !leaveData) return null;
 
   const handleSubmit = async (status: "APPROVED" | "REJECTED") => {
     const response = await updateLeaveFromApprover(

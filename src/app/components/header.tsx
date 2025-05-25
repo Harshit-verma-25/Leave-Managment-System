@@ -1,5 +1,5 @@
 "use client";
-import { Building2, User2Icon } from "lucide-react";
+import { User2Icon } from "lucide-react";
 import Image from "next/image";
 
 export default function Header({
