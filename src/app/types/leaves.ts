@@ -8,20 +8,8 @@ export const LEAVE_TYPES = {
 
 export type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED";
 
-export interface LeaveRequest {
-  id: string;
-  name: string;
-  image: string | null;
-  leaveType: LeaveType;
-  leave: string;
-  fromTo: string;
-  days: string;
-  reason: string;
-  status: LeaveStatus;
-  appliedOn: string;
-}
-
 export interface ApplyLeaveProps {
+  staffID: string;
   leaveType: LeaveType | "";
   leave: string;
   startDate: string | null;
@@ -36,20 +24,16 @@ export interface ApplyLeaveProps {
   status: LeaveStatus;
 }
 
-export interface LeaveHistoryProps {
+export interface LeaveHistoryProps extends ApplyLeaveProps {
   id: string;
-  leaveType: LeaveType;
-  leave: string;
-  startDate: string;
-  endDate: string;
-  noOfDays: number;
-  addressDuringLeave: string;
-  emergencyContactName: string;
-  emergencyContactNumber: string;
-  delegatedTo: string;
-  reason: string;
-  appliedOn: string;
-  status: LeaveStatus;
+  name: string;
   attachment: string | null;
-  // approvedBy: string | null;
+  approvalStatus: {
+    id: string;
+    name: string;
+    comment: string;
+    status: LeaveStatus;
+    approvedOn: string;
+  }[];
+  currentApprover: string;
 }

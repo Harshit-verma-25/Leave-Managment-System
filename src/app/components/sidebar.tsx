@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   UserRoundX,
   User2Icon,
+  CalendarSearch,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -47,22 +48,31 @@ const Sidebar = ({ isOpen, toggleSidebar, role, userId }: SidebarProps) => {
   const roleBasedItems = {
     admin: [
       {
-        label: "Staff",
+        label: "Staff Management",
         href: `/admin/${userId}/staff`,
         icon: User2Icon,
       },
-      // You can add more admin-specific items here
+      {
+        label: "Leave Approvals",
+        href: `/admin/${userId}/leave-request`,
+        icon: CalendarSearch,
+      },
     ],
     manager: [
       {
-        label: "Leave Records",
+        label: "My Leaves",
         href: `/manager/${userId}/leaves`,
         icon: UserRoundX,
+      },
+      {
+        label: "Leave Approvals",
+        href: `/manager/${userId}/leave-request`,
+        icon: CalendarSearch,
       },
     ],
     employee: [
       {
-        label: "Leave Records",
+        label: "My Leaves",
         href: `/employee/${userId}/leaves`,
         icon: UserRoundX,
       },

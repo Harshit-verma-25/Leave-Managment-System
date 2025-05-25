@@ -19,7 +19,11 @@ export default function StaffPage() {
       try {
         const response = await getAllStaff();
         if (response.status === 200) {
-          setData((response.data as StaffData[]) ?? []);
+          setData(
+            (response.data as StaffData[]).filter(
+              (staff) => staff.role !== "admin"
+            ) ?? []
+          );
         } else {
           console.error("Error fetching staff data:", response.message);
         }
@@ -44,7 +48,7 @@ export default function StaffPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {data && data.length > 0 ? (
           data.map((staff) => (
             <Card key={staff.id} className="p-4 flex flex-col items-center">
@@ -61,23 +65,30 @@ export default function StaffPage() {
                   <User2 className="h-full w-full rounded-full border-2 border-gray-300" />
                 )}
               </div>
-              <p className="text-justify mb-4">
+              <p className="text-center">
                 <span className="font-bold text-gray-900">
                   {staff.firstName} {staff.lastName}
-                </span>{" "}
-                | {staff.designation}
+                </span>
+              </p>
+
+              <p className="text-center mb-2">
+                <span className="text-gray-900">{staff.designation}</span>
+                <br />
+                <span className="text-gray-600">
+                  ({staff.role[0].toUpperCase() + staff.role.slice(1)})
+                </span>
               </p>
 
               <div className="flex gap-2">
                 <Link
                   href={`/admin/${adminId}/staff/${staff.id}/view`}
-                  className="p-2 text-xs bg-black text-white rounded"
+                  className="p-2 w-12 text-center text-sm bg-black text-white rounded"
                 >
                   View
                 </Link>
                 <Link
                   href={`/admin/${adminId}/staff/${staff.id}/edit`}
-                  className="p-2 text-xs bg-black text-white rounded"
+                  className="p-2 w-12 text-center text-sm bg-black text-white rounded"
                 >
                   Edit
                 </Link>

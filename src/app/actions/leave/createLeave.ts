@@ -7,16 +7,21 @@ import { nanoid } from "nanoid";
 
 interface CreateLeave extends ApplyLeaveProps {
   attachment: string | null;
+  approvalStatus: {
+    id: string;
+    name: string;
+    comment: string;
+    status: "PENDING" | "APPROVED" | "REJECTED";
+    approvedOn: string;
+  }[];
+  currentApprover: string;
+  name: string;
 }
 
-export async function createLeave(
-  data: CreateLeave,
-  employeeID: string,
-  leaveID: string
-) {
+export async function createLeave(data: CreateLeave, leaveID: string) {
   try {
-    const leaveRef = doc(db, "leaves", employeeID);
-    await setDoc(leaveRef, { [leaveID]: data }, { merge: true });
+    const leaveRef = doc(db, "leaves", leaveID);
+    await setDoc(leaveRef, data);
 
     return {
       status: 200,

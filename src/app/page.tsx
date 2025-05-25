@@ -23,7 +23,7 @@ export default function Home() {
             />
           </div>
           <h1 className="mb-2 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
-            Wisitech Infosolutions Pvt. Ltd.
+            Wisitech InfoSolutions Pvt. Ltd.
           </h1>
           <p className="text-xl text-slate-600">Engage. Convert. Thrive. </p>
         </div>

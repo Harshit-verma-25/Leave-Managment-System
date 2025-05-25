@@ -1,4 +1,12 @@
 export type UserRole = "admin" | "manager" | "employee";
+interface ApprovalStatus {
+  [approverID: string]: "PENDING" | "APPROVED" | "REJECTED";
+}
+
+interface ReportingAuthority {
+  id: string;
+  name: string;
+}
 
 export interface SingleStaffData {
   profile: File | null | string;
@@ -9,6 +17,7 @@ export interface SingleStaffData {
   designation: string;
   assignedUnder: string;
   role: string;
+  reportingAuthority: ReportingAuthority[];
 }
 
 export interface StaffData extends SingleStaffData {
@@ -16,4 +25,6 @@ export interface StaffData extends SingleStaffData {
   id: string;
   email: string;
   joiningDate: string;
+  approvalStatus: ApprovalStatus;
+  currentApprover: string;
 }

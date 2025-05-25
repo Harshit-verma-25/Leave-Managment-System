@@ -1,26 +1,28 @@
 "use server";
 
 import { db } from "@/app/firebase";
-import { getDoc, doc } from "firebase/firestore";
+import { query, where, collection, getDocs } from "firebase/firestore";
 
 export async function getAllLeave(employeeID: string) {
   try {
-    const leaveRef = doc(db, "leaves", employeeID);
-    const leaveDoc = await getDoc(leaveRef);
+    const leaveRef = query(
+      collection(db, "leaves"),
+      where("staffID", "==", employeeID)
+    );
 
-    if (!leaveDoc.exists()) {
+    const leaveDoc = await getDocs(leaveRef);
+
+    if (leaveDoc.empty) {
       return {
         status: 404,
         message: "No leave applications found for this employee",
       };
     }
 
-    const formattedData = Object.entries(leaveDoc.data() || {}).map(
-      ([leaveID, leaveData]) => ({
-        id: leaveID,
-        ...leaveData,
-      })
-    );
+    const formattedData = leaveDoc.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
 
     return {
       status: 200,

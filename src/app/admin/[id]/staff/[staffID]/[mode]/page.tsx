@@ -12,6 +12,8 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import { uploadImage } from "@/app/actions/image/uploadImage";
 import { updateStaff } from "@/app/actions/staff/updateStaff";
+import { getAllStaff } from "@/app/actions/staff/getAllStaff";
+import { set } from "date-fns";
 
 type StaffMode = "create" | "edit" | "view";
 interface StaffPageProps extends SingleStaffData {
@@ -46,18 +48,53 @@ export default function SingleStaffPage() {
     gender: "",
     role: "",
     assignedUnder: "",
+    reportingAuthority: [],
   });
+  const [managerList, setManagerList] = useState<
+    { id: string; name: string; role: string }[] | null
+  >(null);
+  const [adminList, setAdminList] = useState<
+    { id: string; name: string; role: string }[] | null
+  >(null);
 
   useEffect(() => {
-    if (staffID === "new") {
-      const func = async () => {
+    if (mode === "create" || mode === "view") {
+      const fetchLastID = async () => {
         const result = await getStaffID();
         setID(result);
       };
 
-      func();
+      const getManagerList = async () => {
+        const response = await getAllStaff();
+        if (response.status === 200) {
+          const staffData = response.data as StaffData[];
+          const managers = staffData
+            .filter((staff) => staff.role === "manager")
+            .map((staff) => ({
+              name: `${staff.firstName} ${staff.lastName}`,
+              id: staff.id,
+              role: "manager",
+            }));
+
+          const admins = staffData
+            .filter((staff) => staff.role === "admin")
+            .map((staff) => ({
+              name: `${staff.firstName} ${staff.lastName}`,
+              id: staff.id,
+              role: "admin",
+            }));
+
+          setManagerList(managers);
+          setAdminList(admins);
+        } else {
+          console.error("Error fetching staff data:", response.message);
+        }
+      };
+
+      fetchLastID();
+      getManagerList();
     }
-  }, [staffID]);
+  }, [mode]);
 
   useEffect(() => {
     if (mode !== "create") {
@@ -108,11 +145,41 @@ export default function SingleStaffPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+
+    if (name === "role") {
+      setData((prev) => ({
+        ...prev,
+        [name]: value,
+        assignedUnder: "", // Reset assigned under when role changes
+        reportingAuthority: [], // Reset reporting authority when assigned under changes
+      }));
+      return;
+    }
+
+    if (name === "assignedUnder") {
+      setData((prev) => ({
+        ...prev,
+        [name]: value,
+        reportingAuthority: [
+          {
+            id: value,
+            name:
+              managerList?.find((m) => m.id === value)?.name ||
+              adminList?.find((a) => a.id === value)?.name ||
+              "",
+          },
+        ],
+      }));
+      return;
+    }
+
     setData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
+
+  console.log("Data:", data);
 
   function toBase64(file: File): Promise<string | ArrayBuffer | null> {
     return new Promise((resolve, reject) => {
@@ -217,6 +284,8 @@ export default function SingleStaffPage() {
     }
   };
 
+  console.log(data && typeof data.profile);
+
   return (
     <div className="min-h-screen bg-[#f8f9fa] lg:p-6 p-4">
       <div className="flex items-center justify-between">
@@ -237,7 +306,7 @@ export default function SingleStaffPage() {
           <h3 className="text-lg font-bold uppercase">Personal Details</h3>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="profile" className="w-1/3 font-semibold">
+            <label htmlFor="profile" className="w-full font-semibold">
               Profile Picture: <span className="text-red-500">*</span>
             </label>
 
@@ -298,24 +367,25 @@ export default function SingleStaffPage() {
               )}
 
             {/* Show input if mode is create OR profile has been removed in edit */}
-            {(mode === "create" || mode === "edit") && (
-              <input
-                type="file"
-                id="profile"
-                className={`${
-                  mode === ("view" as StaffMode)
-                    ? "w-full border bg-gray-400 text-white placeholder:text-white p-2 rounded cursor-not-allowed"
-                    : "w-full border p-2 rounded"
-                }`}
-                accept=".png, .jpg, .jpeg"
-                onChange={handleFileChange}
-                ref={fileInputRef}
-              />
-            )}
+            {(mode === "create" || mode === "edit") &&
+              typeof data.profile !== "string" && (
+                <input
+                  type="file"
+                  id="profile"
+                  className={`${
+                    mode === ("view" as StaffMode)
+                      ? "w-full border bg-gray-400 text-white placeholder:text-white p-2 rounded cursor-not-allowed"
+                      : "w-full border p-2 rounded"
+                  }`}
+                  accept=".png, .jpg, .jpeg"
+                  onChange={handleFileChange}
+                  ref={fileInputRef}
+                />
+              )}
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="firstName" className="w-1/3 font-semibold">
+            <label htmlFor="firstName" className="w-full font-semibold">
               First Name: <span className="text-red-500">*</span>
             </label>
             <input
@@ -335,7 +405,7 @@ export default function SingleStaffPage() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="lastName" className="w-1/3 font-semibold">
+            <label htmlFor="lastName" className="w-full font-semibold">
               Last Name: <span className="text-red-500">*</span>
             </label>
             <input
@@ -355,7 +425,7 @@ export default function SingleStaffPage() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="phoneNo" className="w-1/3 font-semibold">
+            <label htmlFor="phoneNo" className="w-full font-semibold">
               Phone Number: <span className="text-red-500">*</span>
             </label>
             <input
@@ -375,7 +445,7 @@ export default function SingleStaffPage() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="designation" className="w-1/3 font-semibold">
+            <label htmlFor="designation" className="w-full font-semibold">
               Designation: <span className="text-red-500">*</span>
             </label>
             <input
@@ -395,7 +465,7 @@ export default function SingleStaffPage() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="gender" className="w-1/3 font-semibold">
+            <label htmlFor="gender" className="w-full font-semibold">
               Gender: <span className="text-red-500">*</span>
             </label>
 
@@ -425,7 +495,7 @@ export default function SingleStaffPage() {
             <h3 className="text-lg font-bold uppercase">Company Details</h3>
 
             <div className="flex flex-col gap-1">
-              <label htmlFor="staffId" className="w-1/3 font-semibold">
+              <label htmlFor="staffId" className="w-full font-semibold">
                 Staff ID: <span className="text-red-500">*</span>
               </label>
               <input
@@ -442,7 +512,7 @@ export default function SingleStaffPage() {
             {mode === "create" && (
               <>
                 <div className="flex flex-col gap-1">
-                  <label htmlFor="email" className="w-1/3 font-semibold">
+                  <label htmlFor="email" className="w-full font-semibold">
                     Email:
                   </label>
                   <input
@@ -456,7 +526,7 @@ export default function SingleStaffPage() {
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <label htmlFor="password" className="w-1/3 font-semibold">
+                  <label htmlFor="password" className="w-full font-semibold">
                     Password: <span className="text-red-500">*</span>
                   </label>
 
@@ -472,7 +542,7 @@ export default function SingleStaffPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                      className="absolute inset-y-0 right-0 flex items-center p-3 text-gray-500 hover:text-gray-700"
                     >
                       {showPassword ? "Hide" : "Show"}
                     </button>
@@ -482,7 +552,7 @@ export default function SingleStaffPage() {
                 <div className="flex flex-col gap-1">
                   <label
                     htmlFor="confirmPassword"
-                    className="w-1/3 font-semibold"
+                    className="w-full font-semibold"
                   >
                     Confirm Password: <span className="text-red-500">*</span>
                   </label>
@@ -500,7 +570,7 @@ export default function SingleStaffPage() {
                       onClick={() =>
                         setShowConfirmPassword(!showConfirmPassword)
                       }
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                      className="absolute inset-y-0 right-0 flex items-center p-3 text-gray-500 hover:text-gray-700"
                     >
                       {showConfirmPassword ? "Hide" : "Show"}
                     </button>
@@ -510,7 +580,7 @@ export default function SingleStaffPage() {
             )}
 
             <div className="flex flex-col gap-1">
-              <label htmlFor="role" className="w-1/3 font-semibold">
+              <label htmlFor="role" className="w-full font-semibold">
                 Role Type: <span className="text-red-500">*</span>
               </label>
 
@@ -544,7 +614,7 @@ export default function SingleStaffPage() {
 
             {data.role === "employee" && (
               <div className="flex flex-col gap-1">
-                <label className="w-1/3 font-semibold" htmlFor="assignedUnder">
+                <label className="w-full font-semibold" htmlFor="assignedUnder">
                   Assigned Under: <span className="text-red-500">*</span>
                 </label>
 
@@ -557,11 +627,12 @@ export default function SingleStaffPage() {
                     className="w-full border p-2 rounded"
                   >
                     <option value="">Not Selected</option>
-                    {["Manager 1", "Manager 2", "Manager 3"].map((m, index) => (
-                      <option key={index} value={m}>
-                        {m}
-                      </option>
-                    ))}
+                    {managerList &&
+                      managerList.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name}
+                        </option>
+                      ))}
                   </select>
                 )}
 
@@ -575,6 +646,143 @@ export default function SingleStaffPage() {
                     placeholder="Assigned Under"
                     readOnly
                   />
+                )}
+              </div>
+            )}
+
+            {mode !== "edit" && data.role !== "admin" && data.role !== "" && (
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="reportingAuthority"
+                  className="w-full font-semibold"
+                >
+                  Reporting Authority (Ordered List):
+                  <span className="text-red-500">*</span>
+                </label>
+
+                {mode === "create" && (
+                  <>
+                    <div className="flex gap-2 mb-2">
+                      <select
+                        id="reportingAuthoritySelect"
+                        className="w-full border p-2 rounded"
+                        value=""
+                        onChange={(e) => {
+                          const selectedId = e.target.value;
+                          if (
+                            selectedId &&
+                            !data.reportingAuthority.some(
+                              (authority) =>
+                                (typeof authority === "string"
+                                  ? authority
+                                  : authority.id) === selectedId
+                            )
+                          ) {
+                            const authorities =
+                              managerList &&
+                              adminList &&
+                              [...managerList, ...adminList].find(
+                                (authority) => authority.id === selectedId
+                              );
+                            if (authorities) {
+                              setData((prev) => ({
+                                ...prev,
+                                reportingAuthority: [
+                                  ...prev.reportingAuthority,
+                                  {
+                                    id: authorities.id,
+                                    name: authorities.name,
+                                  },
+                                ],
+                              }));
+                            }
+                          }
+                        }}
+                      >
+                        <option value="" disabled>
+                          Select Authority/Authorities to Add
+                        </option>
+                        {managerList &&
+                          adminList &&
+                          [...managerList, ...adminList]
+                            .filter(
+                              (authority) =>
+                                !data.reportingAuthority.some(
+                                  (a) =>
+                                    (typeof a === "string" ? a : a.id) ===
+                                    authority.id
+                                )
+                            )
+                            .map((authority) => (
+                              <option key={authority.id} value={authority.id}>
+                                {authority.name} |{" "}
+                                {authority.role.charAt(0).toUpperCase() +
+                                  authority.role.slice(1)}
+                              </option>
+                            ))}
+                      </select>
+                    </div>
+
+                    {data.reportingAuthority.length > 0 && (
+                      <ol className="list-decimal list-inside space-y-1">
+                        {data.reportingAuthority.map((report, index) => {
+                          const authorities =
+                            managerList &&
+                            adminList &&
+                            [...managerList, ...adminList].find(
+                              (authority) => authority.id === report.id
+                            );
+                          return (
+                            <li
+                              key={report.id}
+                              className="flex justify-between items-center"
+                            >
+                              <span>
+                                {index + 1}. {authorities && authorities.name}
+                              </span>
+                              <button
+                                type="button"
+                                className="text-red-500 hover:text-red-700 text-sm"
+                                onClick={() =>
+                                  setData((prev) => ({
+                                    ...prev,
+                                    reportingAuthority:
+                                      prev.reportingAuthority.filter(
+                                        (a) =>
+                                          (typeof a === "string" ? a : a.id) !==
+                                          report.id
+                                      ),
+                                  }))
+                                }
+                              >
+                                Remove
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    )}
+                  </>
+                )}
+
+                {mode === "view" && (
+                  <ol className="list-decimal pl-5 space-y-1 text-gray-600">
+                    {data.reportingAuthority.map((id) => {
+                      const authorities =
+                        managerList &&
+                        adminList &&
+                        [...managerList, ...adminList].find((authority) =>
+                          authority.id === id.id ? authority : null
+                        );
+                      console.log("ID:", id);
+                      console.log("Authorities:", authorities);
+                      console.log("Manager List:", managerList);
+                      console.log("Admin List:", adminList);
+                      return (
+                        <li key={id.id}>{authorities?.name || "Unknown"}</li>
+                      );
+                    })}
+                  </ol>
                 )}
               </div>
             )}
@@ -592,11 +800,15 @@ export default function SingleStaffPage() {
 
             {mode === "create" && (
               <button
-                className="w-full bg-green-500 text-white py-2 rounded cursor-pointer"
+                className={`${
+                  loading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700"
+                } text-white w-full font-semibold px-6 py-2 rounded-md cursor-pointer`}
                 type="submit"
                 disabled={loading}
               >
-                Submit
+                {loading ? "Creating..." : "Create Staff"}
               </button>
             )}
 
@@ -606,7 +818,7 @@ export default function SingleStaffPage() {
                 type="submit"
                 disabled={loading}
               >
-                Save
+                {loading ? "Updating..." : "Update Staff"}
               </button>
             )}
 

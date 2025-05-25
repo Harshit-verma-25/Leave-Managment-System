@@ -8,15 +8,20 @@ import {
 import Image from "next/image";
 import { X } from "lucide-react";
 import { toast } from "react-toastify";
-import { differenceInCalendarDays, isBefore } from "date-fns";
+import {
+  differenceInCalendarDays,
+  eachDayOfInterval,
+  isBefore,
+  parseISO,
+} from "date-fns";
 import { uploadImage } from "@/app/actions/image/uploadImage";
 import { createLeave } from "@/app/actions/leave/createLeave";
 import { nanoid } from "nanoid";
 import { getSingleLeave } from "@/app/actions/leave/getSingleLeave";
 import { updateLeave } from "@/app/actions/leave/updateLeave";
+import { getSingleStaff } from "../actions/staff/getSingleStaff";
 
 type roleType = "manager" | "employee";
-
 type LeaveMode = "create" | "edit";
 
 export const LeaveForm = ({ role }: { role: roleType }) => {
@@ -31,6 +36,7 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
 
   const [formData, setFormData] = useState<ApplyLeaveProps | LeaveHistoryProps>(
     {
+      staffID: id,
       leaveType: "",
       leave: "",
       startDate: null,
@@ -45,6 +51,9 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
       status: "PENDING",
     }
   );
+  const [reportingAuthority, setReportingAuthority] = useState<
+    { id: string; name: string }[]
+  >([]);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(
     null
@@ -75,8 +84,26 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
     fetchLeaveData();
   }, [mode]);
 
-  console.log("Form Data:", formData);
-  console.log("Attachment Preview:", attachmentPreview);
+  useEffect(() => {
+    const fetchReportingAuthority = async () => {
+      try {
+        const response = await getSingleStaff(id);
+        if (response.status === 200 && response.data) {
+          setReportingAuthority(
+            response.data.reportingAuthority.map((auth) => ({
+              id: auth.id,
+              name: auth.name,
+            }))
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching reporting authority:", error);
+        toast.error("Failed to fetch reporting authority.");
+      }
+    };
+
+    fetchReportingAuthority();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -135,13 +162,23 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
       const { startDate, endDate } = updatedFormData;
 
       if (startDate && endDate) {
-        if (isBefore(endDate, startDate)) {
+        if (isBefore(parseISO(endDate), parseISO(startDate))) {
           toast.error("End date cannot be before start date.");
           return;
         }
 
-        const days = differenceInCalendarDays(endDate, startDate) + 1;
-        updatedFormData.noOfDays = days;
+        // Get all dates in the interval
+        const allDates = eachDayOfInterval({
+          start: parseISO(startDate),
+          end: parseISO(endDate),
+        });
+
+        // Count only weekdays (Mon–Fri)
+        const workingDays = allDates.filter(
+          (date) => date.getDay() !== 0 && date.getDay() !== 6
+        ).length;
+
+        updatedFormData.noOfDays = workingDays;
       }
 
       setFormData(updatedFormData);
@@ -170,8 +207,6 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
       [name]: value,
     }));
   };
-
-  console.log("Form Data after change:", formData);
 
   const isImage = (url: string) => /\.(jpeg|jpg|png|webp)$/i.test(url);
   //   const isPDF = (url: string) => /\.pdf$/i.test(url);
@@ -252,9 +287,22 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
           console.log(response.error);
         }
       } else {
+        const appStats = reportingAuthority.map((auth) => ({
+          id: auth.id,
+          name: auth.name,
+          status: "PENDING",
+          approvedOn: "",
+          comment: "",
+        }));
+
         const response = await createLeave(
-          { ...formData, attachment: url || "" },
-          id,
+          {
+            ...formData,
+            attachment: url || "",
+            approvalStatus: appStats as LeaveHistoryProps["approvalStatus"],
+            currentApprover: reportingAuthority[0].id,
+            name: JSON.parse(sessionStorage.getItem("user") || "{}").name,
+          },
           leaveID
         );
 
@@ -554,7 +602,7 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
             <button
               type="button"
               onClick={() => router.back()}
-              className="text-white bg-red-600 hover:bg-red-700 px-6 py-2 rounded-md font-semibold"
+              className="text-white bg-red-600 hover:bg-red-700 px-6 py-2 rounded-md font-semibold cursor-pointer"
             >
               Cancel
             </button>
@@ -564,7 +612,7 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
               className={`${
                 isSubmitting
                   ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-green-600 hover:bg-green-700"
+                  : "bg-green-600 hover:bg-green-700 cursor-pointer"
               } text-white font-semibold px-6 py-2 rounded-md`}
             >
               {isSubmitting

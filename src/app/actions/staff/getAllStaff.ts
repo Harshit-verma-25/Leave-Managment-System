@@ -1,15 +1,12 @@
 "use server";
 
 import { db } from "@/app/firebase";
-import { StaffData } from "@/app/types/user";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 
 export async function getAllStaff() {
   try {
-    const staffCollection = query(
-      collection(db, "users"),
-      where("role", "!=", "admin")
-    );
+    const staffCollection = collection(db, "users");
+
     const staffSnapshot = await getDocs(staffCollection);
     const staffList = staffSnapshot.docs.map((doc) => ({
       ...doc.data(),

@@ -13,6 +13,7 @@ export const LeaveTable = ({ role }: { role: string }) => {
   >("PENDING");
 
   const [data, setData] = useState<LeaveHistoryProps[] | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     // Fetch leave requests from the server
@@ -23,9 +24,11 @@ export const LeaveTable = ({ role }: { role: string }) => {
           throw new Error("Failed to fetch leave requests");
         }
 
-        setData(response.data as LeaveHistoryProps[]);
+        setData((response.data as LeaveHistoryProps[]) || []);
       } catch (error) {
         console.error("Error fetching leave requests:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -35,6 +38,7 @@ export const LeaveTable = ({ role }: { role: string }) => {
   console.log("Leave Requests Data:", data);
 
   const filteredRequests = data && data.filter((r) => r.status === selectedTab);
+  console.log("Filtered Requests:", filteredRequests);
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] p-6">
@@ -68,6 +72,7 @@ export const LeaveTable = ({ role }: { role: string }) => {
       {/* Leave Cards */}
       <div className="space-y-4">
         {filteredRequests &&
+          filteredRequests.length > 0 &&
           filteredRequests.map((req) => (
             <div
               key={req.id}
@@ -91,10 +96,10 @@ export const LeaveTable = ({ role }: { role: string }) => {
                   </span>
                 </div>
                 <p className="text-sm text-gray-700 mb-1">
-                  <strong>Start Date: </strong> {formatDate(req.startDate)}
+                  <strong>Start Date: </strong> {formatDate(req.startDate ?? "")}
                 </p>
                 <p className="text-sm text-gray-700 mb-1">
-                  <strong>End Date: </strong> {formatDate(req.endDate)}
+                  <strong>End Date: </strong> {formatDate(req.endDate ?? "")}
                 </p>
                 <p className="text-sm text-gray-700">
                   <strong>Number of Days: </strong> {req.noOfDays}
@@ -102,7 +107,7 @@ export const LeaveTable = ({ role }: { role: string }) => {
               </div>
               <div className="mt-4 md:mt-0 text-right flex flex-col items-end justify-between">
                 <p className="text-sm text-gray-500 mb-2">
-                  Applied on {formatDate(req.appliedOn)}
+                  Applied on {formatDate(req.appliedOn ?? "")}
                 </p>
 
                 {selectedTab === "PENDING" ? (
@@ -135,7 +140,7 @@ export const LeaveTable = ({ role }: { role: string }) => {
             </div>
           ))}
 
-        {filteredRequests && filteredRequests.length === 0 && (
+        {!filteredRequests && (
           <p className="text-sm text-gray-500">No requests in this category.</p>
         )}
       </div>

@@ -3,7 +3,7 @@
 import { db } from "@/app/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { SingleStaffData } from "@/app/types/user";
-import { join } from "path";
+import { LeaveStatus } from "@/app/types/leaves";
 
 export async function createStaff(
   userId: string,
@@ -21,10 +21,13 @@ export async function createStaff(
       lastName: data.lastName,
       gender: data.gender,
       phoneNo: data.phoneNo,
+      ...(data.role === "employee" && { assignedUnder: data.assignedUnder }),
       designation: data.designation,
-      assignedUnder: data.assignedUnder,
       role: data.role.toLowerCase(),
       joiningDate: new Date().toISOString(),
+      ...(data.role !== "admin" && {
+        reportingAuthority: data.reportingAuthority,
+      }),
     }).then(() => {
       return {
         message: "Staff created successfully",

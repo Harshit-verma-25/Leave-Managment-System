@@ -5,6 +5,7 @@ import Sidebar from "@/app/components/sidebar";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { UserRole } from "@/app/types/user";
+import { getSingleStaff } from "../actions/staff/getSingleStaff";
 
 export default function AdminLayout({
   children,
@@ -18,9 +19,11 @@ export default function AdminLayout({
   const [user, setUser] = useState<{
     name: string;
     role: UserRole;
+    profile: string;
   }>({
     name: "",
     role: "employee",
+    profile: "",
   });
 
   useEffect(() => {
@@ -30,14 +33,16 @@ export default function AdminLayout({
   }, []);
 
   useEffect(() => {
-    const getUser = () => {
+    const getUser = async () => {
       const user = sessionStorage.getItem("user");
-      if (user) {
+      const response = await getSingleStaff(adminId);
+      if (user && response.status === 200 && response.data) {
         const parsedUser = JSON.parse(user);
 
         setUser({
           name: parsedUser.name,
           role: parsedUser.role,
+          profile: response.data.profile as string,
         });
       }
     };
@@ -51,7 +56,7 @@ export default function AdminLayout({
 
   return (
     <>
-      <Header userName={user.name} />
+      <Header userName={user.name} profile={user.profile} />
       <div className="flex flex-grow relative">
         <Sidebar
           isOpen={isSidebarOpen}
