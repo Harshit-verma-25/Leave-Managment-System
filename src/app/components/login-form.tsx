@@ -1,11 +1,9 @@
-import { MoveLeftIcon } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Login } from "@/app/actions/auth/login";
 import { toast } from "react-toastify";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { clientAuth } from "../firebase";
+import axios from "axios";
+import Link from "next/link";
+import { MoveLeftIcon } from "lucide-react";
 
 type LoginFormProps = {
   type: string;
@@ -33,28 +31,26 @@ export const LoginForm = ({ type, setType }: LoginFormProps) => {
     }
 
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        clientAuth,
-        email,
-        password
+      const response = await axios.post(
+        "/api/login",
+        { email, password, role: type.toLowerCase() },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
-      const token = await userCredential.user.getIdToken();
-
-      const response = await Login({
-        token,
-        role: type.toLowerCase(),
-      });
 
       if (response.status === 200) {
         sessionStorage.setItem(
           "user",
-          JSON.stringify({ name: response.name, role: response.role })
+          JSON.stringify({ name: response.data.name, role: response.data.role })
         );
         toast.success("Login successful");
 
-        router.push(`/${type.toLowerCase()}/${response.uid}/dashboard`);
+        router.push(`/${type.toLowerCase()}/${response.data.uid}/dashboard`);
       } else {
-        setError(response.message);
+        setError(response.data.message);
       }
     } catch {
     } finally {

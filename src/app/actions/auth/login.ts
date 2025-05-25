@@ -1,7 +1,6 @@
 "use server";
 
-import { adminAuth, clientAuth } from "@/app/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { adminAuth } from "@/app/firebase";
 
 export async function Login(data: { token: string; role: string }) {
   try {
@@ -36,7 +35,7 @@ export async function Login(data: { token: string; role: string }) {
     console.error("Login error:", error.message);
     return {
       status: 500,
-      message: error.message || "Internal Server Error",
+      message: "Invalid Email or Password",
     };
   }
 }
