@@ -3,8 +3,6 @@
 import { db } from "@/app/firebase";
 import { ApplyLeaveProps } from "@/app/types/leaves";
 import { doc, setDoc } from "firebase/firestore";
-import { nanoid } from "nanoid";
-
 interface CreateLeave extends ApplyLeaveProps {
   attachment: string | null;
   approvalStatus: {

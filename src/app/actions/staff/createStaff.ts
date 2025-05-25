@@ -3,7 +3,6 @@
 import { db } from "@/app/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { SingleStaffData } from "@/app/types/user";
-import { LeaveStatus } from "@/app/types/leaves";
 
 export async function createStaff(
   userId: string,
