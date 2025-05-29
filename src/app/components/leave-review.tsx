@@ -48,7 +48,7 @@ export default function LeaveReviewModal({
     <>
       {commentModal && (
         <div className="fixed inset-0 z-60 bg-opacity-50 flex justify-center items-center p-4">
-          <div className="bg-[#f8f9fa] rounded-xl shadow-xl p-4 relative min-w-96">
+          <div className="bg-[#f8f9fa] rounded-xl shadow-2xl p-4 relative min-w-96">
             <div className="flex justify-between items-center border-b pb-2">
               <h2 className="text-xl font-semibold">Add a comment?</h2>
               <button
@@ -83,8 +83,12 @@ export default function LeaveReviewModal({
         </div>
       )}
 
-      <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center p-4">
-        <div className="bg-white rounded-xl shadow-xl p-4 relative min-w-[60vw] max-w-2xl">
+      <div
+        className={`fixed inset-0 z-50 bg-opacity-50 flex justify-center items-center p-4 ${
+          commentModal && "blur-sm"
+        }`}
+      >
+        <div className="bg-[#f8f9fa] rounded-xl shadow-2xl p-4 relative min-w-[60vw] max-w-2xl">
           <div className="flex justify-between items-center border-b pb-2">
             <h2 className="text-xl font-semibold">Leave Request Details</h2>
             <button
@@ -107,7 +111,7 @@ export default function LeaveReviewModal({
               </p>
 
               <p>
-                <strong className="mr-2">Employee Name:</strong>
+                <strong className="mr-2">Employee:</strong>
                 <span>{leaveData.name}</span>
               </p>
 
@@ -122,8 +126,11 @@ export default function LeaveReviewModal({
               </p>
 
               <p>
-                <strong className="mr-2">No. of Days:</strong>
-                <span>{leaveData.noOfDays}</span>
+                <strong className="mr-2">Duration:</strong>
+                <span>
+                  {leaveData.noOfDays}
+                  {leaveData.noOfDays === 1 ? " day" : " days"}
+                </span>
               </p>
 
               <p>
@@ -136,16 +143,16 @@ export default function LeaveReviewModal({
           {/* Contact Section */}
           <div className="mt-4 text-sm text-gray-700">
             <h2 className="text-lg font-bold text-gray-800 mb-2">
-              <span className="underline">Contact Details</span>:
+              <span className="underline">Emergency Contact Details</span>:
             </h2>
             <div className="grid gap-2 md:grid-cols-2">
               <p>
-                <strong className="mr-2">Address During Leave:</strong>
+                <strong className="mr-2">Location:</strong>
                 <span>{leaveData.addressDuringLeave}</span>
               </p>
 
               <p>
-                <strong className="mr-2">Emergency Contact:</strong>
+                <strong className="mr-2">Contact:</strong>
                 <span>
                   {leaveData.emergencyContactName} -{" "}
                   {leaveData.emergencyContactNumber}
