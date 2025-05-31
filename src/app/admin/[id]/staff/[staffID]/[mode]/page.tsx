@@ -50,10 +50,10 @@ export default function SingleStaffPage() {
     reportingAuthority: [],
   });
   const [managerList, setManagerList] = useState<
-    { id: string; name: string; role: string }[] | null
+    { id: string; name: string; designation: string }[] | null
   >(null);
   const [adminList, setAdminList] = useState<
-    { id: string; name: string; role: string }[] | null
+    { id: string; name: string; designation: string }[] | null
   >(null);
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function SingleStaffPage() {
             .map((staff) => ({
               name: `${staff.firstName} ${staff.lastName}`,
               id: staff.id,
-              role: "manager",
+              designation: staff.designation,
             }));
 
           const admins = staffData
@@ -80,7 +80,7 @@ export default function SingleStaffPage() {
             .map((staff) => ({
               name: `${staff.firstName} ${staff.lastName}`,
               id: staff.id,
-              role: "admin",
+              designation: staff.designation,
             }));
 
           setManagerList(managers);
@@ -166,6 +166,10 @@ export default function SingleStaffPage() {
               managerList?.find((m) => m.id === value)?.name ||
               adminList?.find((a) => a.id === value)?.name ||
               "",
+            designation:
+              managerList?.find((m) => m.id === value)?.designation ||
+              adminList?.find((a) => a.id === value)?.designation ||
+              "",
           },
         ],
       }));
@@ -177,8 +181,6 @@ export default function SingleStaffPage() {
       [name]: value,
     }));
   };
-
-  console.log("Data:", data);
 
   function toBase64(file: File): Promise<string | ArrayBuffer | null> {
     return new Promise((resolve, reject) => {
@@ -282,8 +284,6 @@ export default function SingleStaffPage() {
       setLoading(false);
     }
   };
-
-  console.log(data && typeof data.profile);
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] lg:p-6 p-4">
@@ -625,11 +625,13 @@ export default function SingleStaffPage() {
                     onChange={handleChange}
                     className="w-full border p-2 rounded"
                   >
-                    <option value="">Not Selected</option>
+                    <option value="" title="Not Selected" disabled>
+                      Not Selected
+                    </option>
                     {managerList &&
                       managerList.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.name}
+                        <option key={m.id} value={m.id} title={m.id}>
+                          {m.name} | {m.designation}
                         </option>
                       ))}
                   </select>
@@ -691,6 +693,7 @@ export default function SingleStaffPage() {
                                   {
                                     id: authorities.id,
                                     name: authorities.name,
+                                    designation: authorities.designation,
                                   },
                                 ],
                               }));
@@ -714,9 +717,7 @@ export default function SingleStaffPage() {
                             )
                             .map((authority) => (
                               <option key={authority.id} value={authority.id}>
-                                {authority.name} |{" "}
-                                {authority.role.charAt(0).toUpperCase() +
-                                  authority.role.slice(1)}
+                                {authority.name} | {authority.designation}
                               </option>
                             ))}
                       </select>

@@ -11,6 +11,7 @@ interface CreateLeave extends ApplyLeaveProps {
     comment: string;
     status: "PENDING" | "APPROVED" | "REJECTED";
     approvedOn: string;
+    designation: string;
   }[];
   currentApprover: string;
   name: string;

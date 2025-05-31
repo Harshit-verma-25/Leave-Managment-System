@@ -24,16 +24,24 @@ export interface ApplyLeaveProps {
   status: LeaveStatus;
 }
 
+export interface ApprovalStatus {
+  id: string;
+  name: string;
+  comment: string;
+  status: LeaveStatus;
+  approvedOn: string;
+  designation: string;
+}
+
 export interface LeaveHistoryProps extends ApplyLeaveProps {
   id: string;
   name: string;
   attachment: string | null;
-  approvalStatus: {
-    id: string;
-    name: string;
-    comment: string;
-    status: LeaveStatus;
-    approvedOn: string;
-  }[];
+  approvalStatus: ApprovalStatus[];
   currentApprover: string;
+}
+export interface ApprovalHierarchy {
+  leaveRequestId: string;
+  steps: ApprovalStatus[];
+  currentStep: number;
 }

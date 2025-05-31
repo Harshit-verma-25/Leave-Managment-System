@@ -15,9 +15,10 @@ import { nanoid } from "nanoid";
 import { getSingleLeave } from "@/app/actions/leave/getSingleLeave";
 import { updateLeave } from "@/app/actions/leave/updateLeave";
 import { getSingleStaff } from "../actions/staff/getSingleStaff";
+import { ReportingAuthority } from "@/app/types/user";
 
 type roleType = "manager" | "employee";
-type LeaveMode = "create" | "edit";
+type LeaveMode = "create" | "edit" | "view";
 
 export const LeaveForm = ({ role }: { role: roleType }) => {
   const { id, leaveID, mode } = useParams() as {
@@ -47,7 +48,7 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
     }
   );
   const [reportingAuthority, setReportingAuthority] = useState<
-    { id: string; name: string }[]
+    ReportingAuthority[]
   >([]);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(
@@ -56,11 +57,12 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (mode !== "edit") return;
+    if (mode === "create") return;
 
     const fetchLeaveData = async () => {
       try {
-        const response = await getSingleLeave(id, leaveID);
+        const response = await getSingleLeave(leaveID);
+        console.log("Fetched leave data:", response);
 
         if (response.status === 200 && response.data) {
           setFormData(response.data as LeaveHistoryProps);
@@ -88,6 +90,7 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
             response.data.reportingAuthority.map((auth) => ({
               id: auth.id,
               name: auth.name,
+              designation: auth.designation,
             }))
           );
         }
@@ -288,6 +291,7 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
           status: "PENDING",
           approvedOn: "",
           comment: "",
+          designation: auth.designation,
         }));
 
         const response = await createLeave(
@@ -352,8 +356,11 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
                   value={formData.leaveType}
                   onChange={handleChange}
                   name="leaveType"
-                  className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-black ${
+                    mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                  }`}
                   required
+                  disabled={mode === "view"}
                 >
                   <option value="">Select Leave Type</option>
                   {Object.entries(LEAVE_TYPES).map(([key, value]) => (
@@ -378,8 +385,11 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
                   name="startDate"
                   value={formData.startDate || ""}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className={`w-full border border-gray-300 rounded-md p-2 ${
+                    mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                  }`}
                   required
+                  readOnly={mode === "view"}
                 />
               </div>
 
@@ -396,8 +406,11 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
                   name="endDate"
                   value={formData.endDate || ""}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className={`w-full border border-gray-300 rounded-md p-2 ${
+                    mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                  }`}
                   required
+                  readOnly={mode === "view"}
                 />
               </div>
 
@@ -439,8 +452,11 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
                   value={formData.addressDuringLeave}
                   onChange={handleChange}
                   placeholder="Enter your address during leave"
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className={`w-full border border-gray-300 rounded-md p-2 ${
+                    mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                  }`}
                   required
+                  readOnly={mode === "view"}
                 />
               </div>
               <div>
@@ -456,9 +472,12 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
                   name="emergencyContactName"
                   value={formData.emergencyContactName}
                   onChange={handleChange}
-                  required
                   placeholder="Enter your contact name"
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className={`w-full border border-gray-300 rounded-md p-2 ${
+                    mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                  }`}
+                  required
+                  readOnly={mode === "view"}
                 />
               </div>
               <div>
@@ -475,9 +494,12 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
                   name="emergencyContactNumber"
                   value={formData.emergencyContactNumber}
                   onChange={handleChange}
-                  required
                   placeholder="Enter emergency number"
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className={`w-full border border-gray-300 rounded-md p-2 ${
+                    mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                  }`}
+                  required
+                  readOnly={mode === "view"}
                 />
               </div>
             </div>
@@ -498,12 +520,15 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
                 </label>
                 <textarea
                   id="delegatedTo"
-                  required
                   name="delegatedTo"
                   onChange={handleChange}
                   value={formData.delegatedTo}
                   placeholder="Name of the person delegated"
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className={`w-full border border-gray-300 rounded-md p-2 ${
+                    mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                  }`}
+                  required
+                  readOnly={mode === "view"}
                   rows={3}
                 />
               </div>
@@ -517,13 +542,16 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
                 </label>
                 <textarea
                   id="reason"
-                  required
                   name="reason"
                   onChange={handleChange}
                   value={formData.reason}
                   placeholder="State your reason"
                   rows={3}
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className={`w-full border border-gray-300 rounded-md p-2 ${
+                    mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                  }`}
+                  required
+                  readOnly={mode === "view"}
                 />
               </div>
             </div>
@@ -578,7 +606,10 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
                   type="file"
                   accept=".pdf,.jpg,.jpeg, .png"
                   onChange={handleFileChange}
-                  className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-black ${
+                    mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                  }`}
+                  readOnly={mode === "view"}
                 />
                 <p className="text-gray-500 text-sm">
                   Attach any relevant documents (PDF, JPG, JPEG) with max size
@@ -593,32 +624,34 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
           </div>
 
           {/* Submit Buttons */}
-          <div className="flex gap-4">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="text-white bg-red-600 hover:bg-red-700 px-6 py-2 rounded-md font-semibold cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`${
-                isSubmitting
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-green-600 hover:bg-green-700 cursor-pointer"
-              } text-white font-semibold px-6 py-2 rounded-md`}
-            >
-              {isSubmitting
-                ? mode === "edit"
-                  ? "Updating..."
-                  : "Submitting..."
-                : mode === "edit"
-                ? "Update Request"
-                : "Submit Request"}
-            </button>
-          </div>
+          {mode !== "view" && (
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="text-white bg-red-600 hover:bg-red-700 px-6 py-2 rounded-md font-semibold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`${
+                  isSubmitting
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700 cursor-pointer"
+                } text-white font-semibold px-6 py-2 rounded-md`}
+              >
+                {isSubmitting
+                  ? mode === "edit"
+                    ? "Updating..."
+                    : "Submitting..."
+                  : mode === "edit"
+                  ? "Update Request"
+                  : "Submit Request"}
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>

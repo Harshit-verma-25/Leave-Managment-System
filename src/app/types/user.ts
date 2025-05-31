@@ -3,9 +3,10 @@ interface ApprovalStatus {
   [approverID: string]: "PENDING" | "APPROVED" | "REJECTED";
 }
 
-interface ReportingAuthority {
+export interface ReportingAuthority {
   id: string;
   name: string;
+  designation: string;
 }
 
 export interface SingleStaffData {

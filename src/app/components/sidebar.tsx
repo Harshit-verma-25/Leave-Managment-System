@@ -54,7 +54,7 @@ const Sidebar = ({ isOpen, toggleSidebar, role, userId }: SidebarProps) => {
       },
       {
         label: "Leave Approvals",
-        href: `/admin/${userId}/leave-request`,
+        href: `/admin/${userId}/leave-approval`,
         icon: CalendarSearch,
       },
     ],
@@ -66,7 +66,7 @@ const Sidebar = ({ isOpen, toggleSidebar, role, userId }: SidebarProps) => {
       },
       {
         label: "Leave Approvals",
-        href: `/manager/${userId}/leave-request`,
+        href: `/manager/${userId}/leave-approval`,
         icon: CalendarSearch,
       },
     ],

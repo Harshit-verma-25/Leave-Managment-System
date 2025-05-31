@@ -5,7 +5,6 @@ import { LeaveHistoryProps } from "@/app/types/leaves";
 import { doc, getDoc } from "firebase/firestore";
 
 export async function getSingleLeave(
-  employeeID: string,
   leaveID: string
 ): Promise<{
   status: number;
@@ -14,7 +13,7 @@ export async function getSingleLeave(
   error?: any;
 }> {
   try {
-    const leaveRef = doc(db, "leaves", employeeID);
+    const leaveRef = doc(db, "leaves", leaveID);
     const leaveDoc = await getDoc(leaveRef);
 
     if (!leaveDoc.exists()) {
@@ -24,7 +23,7 @@ export async function getSingleLeave(
       };
     }
 
-    const leaveData = leaveDoc.data()?.[leaveID];
+    const leaveData = leaveDoc.data();
 
     if (!leaveData) {
       return {

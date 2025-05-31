@@ -1,20 +1,24 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LEAVE_TYPES, LeaveHistoryProps } from "@/app/types/leaves";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { getAllLeave } from "@/app/actions/leave/getAllLeave";
 import formatDate from "@/app/components/formatDate";
 import { deleteLeave } from "@/app/actions/leave/deleteLeave";
 import { toast } from "react-toastify";
+import ApprovalTimeline from "@/app/components/approval-timeline";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export const LeaveTable = ({ role }: { role: string }) => {
   const { id } = useParams() as { id: string };
+  const searchParams = useSearchParams();
 
   const [selectedTab, setSelectedTab] = useState<
     "PENDING" | "APPROVED" | "REJECTED"
   >("PENDING");
 
   const [data, setData] = useState<LeaveHistoryProps[] | null>(null);
+  const [expandCard, setExpandCard] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -41,7 +45,17 @@ export const LeaveTable = ({ role }: { role: string }) => {
     };
 
     fetchLeaveRequests();
-  }, [id]);
+  }, [id, searchParams]);
+
+  const toggleCardExpansion = (leaveId: string) => {
+    setExpandCard((prev) => (prev === leaveId ? null : leaveId));
+  };
+
+  const getCurrentStep = (leave: LeaveHistoryProps) => {
+    return leave.approvalStatus?.findIndex(
+      (status) => status.status === "PENDING"
+    );
+  };
 
   const handleDeleteLeave = (leaveId: string) => async () => {
     try {
@@ -114,107 +128,107 @@ export const LeaveTable = ({ role }: { role: string }) => {
       {/* Leave Cards */}
       {!loading && filteredRequests && filteredRequests.length > 0 && (
         <div className="space-y-4">
-          {filteredRequests.map((req) => (
-            <div
-              key={req.id}
-              className="border rounded-lg p-4 flex flex-col md:flex-row justify-between"
-            >
-              <div className="w-full flex flex-col md:flex-row justify-between">
-                <div className="flex-1 flex flex-col gap-4">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-semibold">
-                      {LEAVE_TYPES[req.leaveType as keyof typeof LEAVE_TYPES]}
-                    </h3>
-                    <span
-                      className={`px-2 py-1 rounded-3xl font-semibold text-xs ${
-                        req.status === "PENDING"
-                          ? "bg-yellow-100 text-yellow-800 border border-yellow-800"
-                          : req.status === "APPROVED"
-                          ? "bg-green-100 text-green-800 border border-green-800"
-                          : "bg-red-100 text-red-800 border border-red-800"
-                      }`}
-                    >
-                      {req.status}
-                    </span>
+          {filteredRequests.map((req) => {
+            const isExpanded = expandCard === req.id;
+            console.log("get Current Step", getCurrentStep(req));
+            return (
+              <div
+                key={req.id}
+                className=" p-4 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-full flex flex-col md:flex-row justify-between">
+                  <div className="flex-1 flex flex-col gap-4">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold">
+                        {LEAVE_TYPES[req.leaveType as keyof typeof LEAVE_TYPES]}
+                      </h3>
+                      <span
+                        className={`px-2 py-1 rounded-3xl font-semibold text-xs ${
+                          req.status === "PENDING"
+                            ? "bg-yellow-100 text-yellow-800 border border-yellow-800"
+                            : req.status === "APPROVED"
+                            ? "bg-green-100 text-green-800 border border-green-800"
+                            : "bg-red-100 text-red-800 border border-red-800"
+                        }`}
+                      >
+                        {req.status}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <p className="text-sm text-gray-700">
+                        <strong>Start Date: </strong>
+                        {formatDate(req.startDate ?? "")}
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        <strong>End Date: </strong>
+                        {formatDate(req.endDate ?? "")}
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        <strong>Duration: </strong>
+                        {req.noOfDays} {req.noOfDays === 1 ? "day" : "days"}
+                      </p>
+                    </div>
+
+                    <p className="text-sm text-gray-500">
+                      Applied on {formatDate(req.appliedOn ?? "")}
+                    </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <p className="text-sm text-gray-700">
-                      <strong>Start Date: </strong>
-                      {formatDate(req.startDate ?? "")}
-                    </p>
-                    <p className="text-sm text-gray-700">
-                      <strong>End Date: </strong>
-                      {formatDate(req.endDate ?? "")}
-                    </p>
-                    <p className="text-sm text-gray-700">
-                      <strong>Duration: </strong>
-                      {req.noOfDays} {req.noOfDays === 1 ? "day" : "days"}
-                    </p>
-                  </div>
-
-                  <p className="text-sm text-gray-500">
-                    Applied on {formatDate(req.appliedOn ?? "")}
-                  </p>
-                </div>
-
-                <div className="flex flex-col items-end justify-between">
-                  {/* Action buttons */}
-                  <div className="flex items-center gap-2">
-                    {selectedTab === "PENDING" ? (
-                      <>
-                        <Link href={`/${role}/${id}/leaves/${req.id}/edit`}>
-                          <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md cursor-pointer transition-colors">
-                            Edit
+                  <div className="flex flex-col items-end justify-between">
+                    {/* Action buttons */}
+                    <div className="flex items-center gap-2">
+                      {selectedTab === "PENDING" ? (
+                        <>
+                          <Link href={`/${role}/${id}/leaves/${req.id}/edit`}>
+                            <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md cursor-pointer transition-colors">
+                              Edit
+                            </button>
+                          </Link>
+                          <button
+                            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md cursor-pointer transition-colors"
+                            onClick={handleDeleteLeave(req.id)}
+                          >
+                            Delete
+                          </button>
+                        </>
+                      ) : (
+                        <Link href={`/${role}/${id}/leaves/${req.id}/view`}>
+                          <button className="bg-black text-white px-4 py-2 rounded-md cursor-pointer transition-colors">
+                            View Details
                           </button>
                         </Link>
-                        <button
-                          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md cursor-pointer transition-colors"
-                          onClick={handleDeleteLeave(req.id)}
-                        >
-                          Delete
-                        </button>
-                      </>
-                    ) : (
-                      <Link href={`/${role}/${id}/leaves/${req.id}/view`}>
-                        <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md cursor-pointer transition-colors">
-                          View Details
-                        </button>
-                      </Link>
-                    )}
+                      )}
+                    </div>
+
+                    {/* Toggle timeline button */}
+                    <button
+                      onClick={() => toggleCardExpansion(req.id)}
+                      className="flex items-center gap-1 text-sm text-black cursor-pointer transition-colors"
+                    >
+                      {isExpanded ? (
+                        <>
+                          Hide Timeline <ChevronUp className="w-4 h-4" />
+                        </>
+                      ) : (
+                        <>
+                          View Timeline <ChevronDown className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
                   </div>
-
-                  {/* Toggle timeline button */}
-
-                  {/* <button
-                    onClick={() => toggleCardExpansion(req.id)}
-                    className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
-                  >
-                    {isExpanded ? (
-                      <>
-                        Hide Timeline <ChevronUp className="w-4 h-4" />
-                      </>
-                    ) : (
-                      <>
-                        View Timeline <ChevronDown className="w-4 h-4" />
-                      </>
-                    )}
-                  </button> */}
                 </div>
-              </div>
 
-              {/* Approval Timeline - Expandable */}
-
-              {/* {isExpanded && req.approvalSteps && (
-                <div className="border-t bg-gray-50">
+                {/* Approval Timeline - Expandable */}
+                {isExpanded && (
                   <ApprovalTimeline
-                    steps={req.approvalSteps}
+                    steps={req.approvalStatus || []}
                     currentStep={getCurrentStep(req)}
                   />
-                </div>
-              )} */}
-            </div>
-          ))}
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
