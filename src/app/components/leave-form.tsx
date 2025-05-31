@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -80,6 +82,8 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
 
     fetchLeaveData();
   }, [mode]);
+
+  console.log("Form Data:", formData);
 
   useEffect(() => {
     const fetchReportingAuthority = async () => {
@@ -320,8 +324,6 @@ export const LeaveForm = ({ role }: { role: roleType }) => {
       setIsSubmitting(false);
     }
   };
-
-  console.log(attachment && toBase64(attachment));
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] lg:p-6 p-4">
